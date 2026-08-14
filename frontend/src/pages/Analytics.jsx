@@ -65,21 +65,21 @@ export default function Analytics() {
 
   return (
     <PageContainer title="Analytics" subtitle="Monitor risk trends, scan distributions, and operational signals across the ScamShield platform.">
-      {error ? <div className="alert alert-danger mb-4">{error}</div> : null}
+      {error ? <div className="analytics-error">{error}</div> : null}
 
       {isLoading ? (
-        <div className="glass-panel p-5 text-center">
+        <div className="glass-panel analytics-loading-panel">
           <div className="spinner-border text-info" role="status" aria-label="Loading analytics" />
-          <div className="text-secondary mt-3">Loading analytics data…</div>
+          <div className="analytics-loading-text">Loading analytics data…</div>
         </div>
       ) : (
         <>
-          <div className="row g-4 mb-4">
+          <div className="row g-4 mb-4 analytics-summary-grid">
             {stats.map((stat) => (
               <div key={stat.label} className="col-12 col-sm-6 col-xl-3">
-                <div className="glass-panel p-4 h-100">
-                  <small className="text-secondary text-uppercase tracking-wider">{stat.label}</small>
-                  <div className="display-6 text-light mt-2 fw-bold">{stat.value}</div>
+                <div className="analytics-stat-card glass-panel h-100">
+                  <small>{stat.label}</small>
+                  <div className="analytics-stat-value">{stat.value}</div>
                 </div>
               </div>
             ))}
@@ -87,22 +87,22 @@ export default function Analytics() {
 
           <div className="row g-4">
             <div className="col-12 col-xl-8">
-              <div className="glass-panel p-4 h-100">
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <h3 className="h5 text-light mb-0">Risk distribution</h3>
-                  <span className="badge rounded-pill bg-info bg-opacity-10 text-info">Live</span>
+              <div className="analytics-panel glass-panel p-4 h-100">
+                <div className="analytics-panel-header">
+                  <h3>Risk distribution</h3>
+                  <span className="analytics-live-badge">Live</span>
                 </div>
 
-                <div className="d-grid gap-3">
+                <div className="analytics-bars">
                   {chartValues.map((item) => (
-                    <div key={item.label}>
-                      <div className="d-flex justify-content-between small text-secondary mb-1">
+                    <div key={item.label} className="analytics-bar-row">
+                      <div className="analytics-bar-meta">
                         <span>{item.label}</span>
                         <span>{item.value}</span>
                       </div>
-                      <div className="progress" style={{ height: 12, background: "rgba(255,255,255,0.08)" }}>
+                      <div className="analytics-progress">
                         <div
-                          className="progress-bar rounded-pill"
+                          className="analytics-progress-bar"
                           role="progressbar"
                           aria-valuenow={item.value}
                           aria-valuemin="0"
@@ -117,17 +117,17 @@ export default function Analytics() {
             </div>
 
             <div className="col-12 col-xl-4">
-              <div className="glass-panel p-4 h-100">
-                <h3 className="h5 text-light mb-3">Recent activity</h3>
-                <div className="d-grid gap-3">
+              <div className="analytics-panel glass-panel p-4 h-100">
+                <h3 className="analytics-panel-title">Recent activity</h3>
+                <div className="analytics-activity-list">
                   {recentScans.length > 0 ? recentScans.slice(0, 5).map((scan) => (
-                    <div key={scan.scan_id || Math.random()} className="border rounded-4 p-3 border-secondary border-opacity-25">
-                      <div className="small text-secondary">{scan.kind || "Scan"}</div>
-                      <div className="fw-semibold text-light text-truncate">{scan.input || "Unknown target"}</div>
-                      <div className="small text-info">{scan.risk || "Unknown risk"}</div>
+                    <div key={scan.scan_id || Math.random()} className="analytics-activity-item">
+                      <div className="analytics-activity-kind">{scan.kind || "Scan"}</div>
+                      <div className="analytics-activity-target">{scan.input || "Unknown target"}</div>
+                      <div className="analytics-activity-risk">{scan.risk || "Unknown risk"}</div>
                     </div>
                   )) : (
-                    <div className="text-secondary small">No recent activity found.</div>
+                    <div className="analytics-empty">No recent activity found.</div>
                   )}
                 </div>
               </div>

@@ -15,47 +15,47 @@ export default function ScanResults() {
 
   return (
     <PageContainer title="Scan Results" subtitle="Review the actual backend risk evaluation and supporting evidence for this investigation.">
-      <div className="row g-4">
+      <div className="results-shell row g-4">
         <div className="col-12 col-xl-4">
-          <div className="glass-panel p-4 h-100">
-            <div className="d-flex align-items-center justify-content-between mb-3">
-              <span className="text-secondary text-uppercase small tracking-wider">Scan ID</span>
-              <span className="badge rounded-pill bg-info bg-opacity-10 text-info">{id || "latest"}</span>
+          <div className="result-overview glass-panel h-100">
+            <div className="results-meta-row">
+              <span>Scan ID</span>
+              <span className="results-badge">{id || "latest"}</span>
             </div>
 
-            <div className="display-4 fw-bold text-light">{Math.round(riskScore)}</div>
-            <div className="text-secondary mb-3">Risk score</div>
+            <div className="results-score">{Math.round(riskScore)}</div>
+            <div className="results-score-label">Risk score</div>
 
-            <div className="progress" style={{ height: 12, background: "rgba(255,255,255,0.08)" }}>
+            <div className="results-progress-wrap">
               <div
-                className="progress-bar rounded-pill"
+                className="results-progress"
                 style={{ width: `${Math.min(riskScore, 100)}%`, background: riskScore >= 70 ? "#ef4444" : riskScore >= 40 ? "#fbbf24" : "#22c55e" }}
               />
             </div>
 
-            <div className="mt-4">
-              <div className="small text-secondary">Risk level</div>
-              <div className="h5 text-light mt-1">{riskLevel}</div>
+            <div className="results-risk-block">
+              <div className="results-block-label">Risk level</div>
+              <div className="results-block-value">{riskLevel}</div>
             </div>
 
-            <div className="d-grid gap-2 mt-4">
-              <button className="btn btn-outline-light" type="button" onClick={() => navigate(-1)}>Back</button>
+            <div className="results-actions">
+              <button className="btn-premium-secondary" type="button" onClick={() => navigate(-1)}>Back</button>
             </div>
           </div>
         </div>
 
         <div className="col-12 col-xl-8">
-          <div className="glass-panel p-4">
-            <div className="d-flex align-items-center justify-content-between mb-4">
-              <h3 className="h5 text-light mb-0">Threat classification</h3>
-              <span className="badge rounded-pill bg-dark border border-secondary text-light">{result.classification || result.risk_level || "Unknown"}</span>
+          <div className="results-panel glass-panel">
+            <div className="results-panel-header">
+              <h3>Threat classification</h3>
+              <span className="results-pill">{result.classification || result.risk_level || "Unknown"}</span>
             </div>
 
             <div className="row g-3">
               <div className="col-12 col-md-6">
-                <div className="border rounded-4 p-3 border-secondary border-opacity-25">
-                  <div className="small text-secondary mb-2">Analysis information</div>
-                  <ul className="mb-0 ps-3 text-light small">
+                <div className="results-subpanel">
+                  <div className="results-subtitle">Analysis information</div>
+                  <ul>
                     <li>Confidence: {result.confidence ?? "Unknown"}</li>
                     <li>Type: {result.content_type || result.kind || "N/A"}</li>
                     <li>URL: {result.url || result.target || "N/A"}</li>
@@ -64,9 +64,9 @@ export default function ScanResults() {
               </div>
 
               <div className="col-12 col-md-6">
-                <div className="border rounded-4 p-3 border-secondary border-opacity-25">
-                  <div className="small text-secondary mb-2">Evidence</div>
-                  <pre className="mb-0 text-light small" style={{ whiteSpace: "pre-wrap" }}>
+                <div className="results-subpanel">
+                  <div className="results-subtitle">Evidence</div>
+                  <pre>
                     {JSON.stringify(evidence, null, 2) || "No evidence metadata provided by the backend."}
                   </pre>
                 </div>
@@ -78,31 +78,31 @@ export default function ScanResults() {
 
       <div className="row g-4 mt-1">
         <div className="col-12 col-lg-6">
-          <div className="glass-panel p-4 h-100">
-            <h3 className="h5 text-light mb-3">Findings</h3>
+          <div className="results-panel glass-panel h-100">
+            <h3 className="results-panel-title">Findings</h3>
             {findings.length > 0 ? (
-              <ul className="mb-0 ps-3 text-light">
+              <ul className="results-list">
                 {findings.map((finding, index) => (
-                  <li key={`${finding}-${index}`} className="mb-2">{String(finding)}</li>
+                  <li key={`${finding}-${index}`}>{String(finding)}</li>
                 ))}
               </ul>
             ) : (
-              <div className="text-secondary">No findings were returned by the backend.</div>
+              <div className="results-empty">No findings were returned by the backend.</div>
             )}
           </div>
         </div>
 
         <div className="col-12 col-lg-6">
-          <div className="glass-panel p-4 h-100">
-            <h3 className="h5 text-light mb-3">Recommendations</h3>
+          <div className="results-panel glass-panel h-100">
+            <h3 className="results-panel-title">Recommendations</h3>
             {recommendations.length > 0 ? (
-              <ul className="mb-0 ps-3 text-light">
+              <ul className="results-list">
                 {recommendations.map((item, index) => (
-                  <li key={`${item}-${index}`} className="mb-2">{String(item)}</li>
+                  <li key={`${item}-${index}`}>{String(item)}</li>
                 ))}
               </ul>
             ) : (
-              <div className="text-secondary">No recommendations were returned by the backend.</div>
+              <div className="results-empty">No recommendations were returned by the backend.</div>
             )}
           </div>
         </div>

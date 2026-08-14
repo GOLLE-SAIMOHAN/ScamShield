@@ -147,7 +147,7 @@ export default function Dashboard() {
       ) : null}
 
       {/* Summary KPI Row */}
-      <div className="row g-4 mb-5">
+      <div className="row g-4 mb-5 dashboard-kpi-grid">
         {summaryCards.map((card, idx) => (
           <div
             key={card.title}
@@ -160,33 +160,32 @@ export default function Dashboard() {
       </div>
 
       {/* Multi-Modal Module Direct Launchers */}
-      <h3 className="h6 fw-bold text-light text-uppercase tracking-wider mb-3">
-        <i className="bi bi-cpu-fill text-info me-2" />
-        AI Detection Modules
-      </h3>
-      <div className="row g-4 mb-5">
+      <div className="dashboard-section-header">
+        <i className="bi bi-cpu-fill" />
+        <h3>AI Detection Modules</h3>
+      </div>
+      <div className="row g-4 mb-5 dashboard-module-grid">
         {MODULE_CARDS.map((module) => (
           <div key={module.id} className="col-12 col-sm-6 col-lg-3">
             <div
-              className="glass-panel p-4 h-100 cursor-pointer text-start transition-all hover-shadow"
-              style={{ cursor: "pointer" }}
+              className="dashboard-module-card glass-panel h-100 text-start"
               onClick={() => navigate("/scanner")}
             >
               <div
-                className="p-3 rounded-3 d-inline-flex mb-3"
+                className="dashboard-module-icon"
                 style={{
                   background: `${module.color}15`,
                   color: module.color,
                   border: `1px solid ${module.color}30`,
                 }}
               >
-                <i className={`bi ${module.icon} fs-4`} />
+                <i className={`bi ${module.icon}`} />
               </div>
-              <h4 className="h6 fw-bold text-light mb-1">{module.title}</h4>
-              <p className="text-muted small mb-3">{module.desc}</p>
-              <div className="d-flex align-items-center text-info fs-8 fw-bold text-uppercase tracking-wider">
+              <h4>{module.title}</h4>
+              <p>{module.desc}</p>
+              <div className="dashboard-module-link">
                 <span>Launch Detector</span>
-                <i className="bi bi-arrow-right ms-2" />
+                <i className="bi bi-arrow-right" />
               </div>
             </div>
           </div>
@@ -196,27 +195,22 @@ export default function Dashboard() {
       {/* Recent Activity Table & Threat Feed */}
       <div className="row g-4 mb-5">
         <div className="col-12 col-lg-8 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-          <div className="glass-panel h-100 overflow-hidden">
-            <div className="p-3 border-bottom border-secondary border-opacity-20 d-flex align-items-center justify-content-between">
+          <div className="dashboard-feed-panel glass-panel h-100 overflow-hidden">
+            <div className="dashboard-panel-header">
               <div className="d-flex align-items-center">
-                <i className="bi bi-clock-history text-info me-2 fs-5" />
-                <h3 className="h6 fw-bold mb-0 text-light text-uppercase tracking-wider">
-                  Live Activity Telemetry
-                </h3>
+                <i className="bi bi-clock-history me-2" />
+                <h3>Live Activity Telemetry</h3>
               </div>
-              <Link
-                to="/history"
-                className="btn btn-link btn-sm text-info text-decoration-none p-0 fw-semibold fs-8 text-uppercase tracking-wider"
-              >
+              <Link to="/history" className="dashboard-panel-link">
                 View History <i className="bi bi-arrow-right ms-1" />
               </Link>
             </div>
             <div className="p-0">
               {recentScans.length > 0 ? (
                 <div className="table-responsive">
-                  <table className="table table-dark table-hover align-middle mb-0">
+                  <table className="dashboard-table table align-middle mb-0">
                     <thead>
-                      <tr className="text-muted text-uppercase tracking-wider fs-8 border-bottom border-secondary border-opacity-15">
+                      <tr>
                         <th className="ps-4 py-3">Payload / Target</th>
                         <th className="py-3">Mode</th>
                         <th className="py-3">Risk Level</th>
@@ -225,15 +219,12 @@ export default function Dashboard() {
                     </thead>
                     <tbody>
                       {recentScans.map((scan, idx) => (
-                        <tr key={scan.scan_id || idx} className="border-bottom border-secondary border-opacity-10">
-                          <td
-                            className="ps-4 py-3 text-truncate text-info small fw-bold fw-mono"
-                            style={{ maxWidth: "260px" }}
-                          >
+                        <tr key={scan.scan_id || idx}>
+                          <td className="ps-4 py-3 text-truncate" style={{ maxWidth: "260px" }}>
                             {scan.input || "Target domain"}
                           </td>
-                          <td className="py-3 small text-muted">
-                            <span className="badge bg-dark border border-info border-opacity-25 text-info px-2 py-1 rounded-pill fs-9 text-uppercase">
+                          <td className="py-3">
+                            <span className="dashboard-kind-badge">
                               {scan.kind || "URL"}
                             </span>
                           </td>
@@ -260,36 +251,29 @@ export default function Dashboard() {
 
         {/* Live Threat Intelligence Feed */}
         <div className="col-12 col-lg-4 animate-fade-in" style={{ animationDelay: "0.4s" }}>
-          <div className="glass-panel h-100 overflow-hidden">
-            <div className="p-3 border-bottom border-secondary border-opacity-20 d-flex align-items-center">
-              <i className="bi bi-rss-fill text-warning me-2 fs-5" />
-              <h3 className="h6 fw-bold mb-0 text-light text-uppercase tracking-wider">
-                Threat Intelligence Feed
-              </h3>
+          <div className="dashboard-feed-panel glass-panel h-100 overflow-hidden">
+            <div className="dashboard-panel-header">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-rss-fill me-2" />
+                <h3>Threat Intelligence Feed</h3>
+              </div>
             </div>
-            <div className="p-4 d-flex flex-column gap-3">
+            <div className="dashboard-feed-list">
               {[
                 { label: "hdfc-verify-pin.com", type: "Phishing Domain", risk: "CRITICAL" },
                 { label: "AI Voice Clone Call (+91 98...)", type: "Audio Deepfake", risk: "HIGH" },
                 { label: "bit.ly/rbi-free-bonus", type: "Urgency Fraud Link", risk: "HIGH" },
                 { label: "edited_id_card.png", type: "Forged Document", risk: "MEDIUM" },
               ].map((item, idx) => (
-                <div
-                  key={idx}
-                  className="d-flex align-items-start gap-3 p-3 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-15"
-                >
-                  <div className="p-2 rounded bg-danger bg-opacity-15 text-danger mt-0">
-                    <i className="bi bi-bug-fill small" />
+                <div key={idx} className="dashboard-feed-item">
+                  <div className="dashboard-feed-icon">
+                    <i className="bi bi-bug-fill" />
                   </div>
                   <div>
-                    <p className="mb-1 text-light small fw-bold fw-mono" style={{ lineHeight: "1.4" }}>
-                      {item.label}
-                    </p>
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="fs-9 tracking-wider text-uppercase fw-bold text-danger">
-                        {item.risk}
-                      </span>
-                      <span className="text-muted fs-9">• {item.type}</span>
+                    <p>{item.label}</p>
+                    <div className="dashboard-feed-meta">
+                      <span className="dashboard-feed-risk">{item.risk}</span>
+                      <span>• {item.type}</span>
                     </div>
                   </div>
                 </div>

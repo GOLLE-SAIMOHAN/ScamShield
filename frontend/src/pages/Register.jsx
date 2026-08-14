@@ -51,23 +51,23 @@ export default function Register() {
   }
 
   return (
-    <div className="container py-5">
+    <div className="container py-5 auth-shell">
       <div className="row justify-content-center align-items-center g-4 min-vh-75">
-        <div className="col-12 col-lg-6">
-          <div className="glass-panel p-4 p-md-5">
-            <div className="mb-4">
-              <span className="badge rounded-pill px-3 py-2 bg-info bg-opacity-10 text-info border border-info border-opacity-25 fw-semibold text-uppercase tracking-wider">Create account</span>
-              <h1 className="h2 mt-3 mb-2 text-light">Join the ScamShield analyst workspace</h1>
-              <p className="text-secondary mb-0">Register to start running scans, tracking history, and analyzing threat data.</p>
+        <div className="col-12 col-lg-7">
+          <div className="glass-panel auth-panel">
+            <div className="auth-header">
+              <span className="auth-badge">Create account</span>
+              <h1>Join the ScamShield analyst workspace</h1>
+              <p>Register to start running scans, tracking history, and analyzing threat data.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="row g-3">
+            <form onSubmit={handleSubmit} className="auth-form row g-3">
               <div className="col-12">
-                <label htmlFor="username" className="form-label text-light">Display name</label>
+                <label htmlFor="username">Display name</label>
                 <input
                   id="username"
                   type="text"
-                  className="form-control form-control-lg bg-transparent border-secondary text-light"
+                  className="form-control form-control-lg"
                   required
                   value={form.username}
                   onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
@@ -76,11 +76,11 @@ export default function Register() {
               </div>
 
               <div className="col-12">
-                <label htmlFor="email" className="form-label text-light">Email address</label>
+                <label htmlFor="email">Email address</label>
                 <input
                   id="email"
                   type="email"
-                  className="form-control form-control-lg bg-transparent border-secondary text-light"
+                  className="form-control form-control-lg"
                   required
                   value={form.email}
                   onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
@@ -89,11 +89,11 @@ export default function Register() {
               </div>
 
               <div className="col-12 col-md-6">
-                <label htmlFor="password" className="form-label text-light">Password</label>
+                <label htmlFor="password">Password</label>
                 <input
                   id="password"
                   type="password"
-                  className="form-control form-control-lg bg-transparent border-secondary text-light"
+                  className="form-control form-control-lg"
                   required
                   value={form.password}
                   onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
@@ -102,11 +102,11 @@ export default function Register() {
               </div>
 
               <div className="col-12 col-md-6">
-                <label htmlFor="confirmPassword" className="form-label text-light">Confirm password</label>
+                <label htmlFor="confirmPassword">Confirm password</label>
                 <input
                   id="confirmPassword"
                   type="password"
-                  className="form-control form-control-lg bg-transparent border-secondary text-light"
+                  className="form-control form-control-lg"
                   required
                   value={form.confirmPassword}
                   onChange={(event) => setForm((current) => ({ ...current, confirmPassword: event.target.value }))}
@@ -116,20 +116,20 @@ export default function Register() {
 
               {error ? (
                 <div className="col-12">
-                  <div className="alert alert-danger mb-0" role="alert">{error}</div>
+                  <div className="auth-alert" role="alert">{error}</div>
                 </div>
               ) : null}
 
               <div className="col-12 d-grid mt-2">
-                <button type="submit" className="btn btn-info btn-lg fw-semibold" disabled={isSubmitting}>
+                <button type="submit" className="btn auth-submit" disabled={isSubmitting}>
                   {isSubmitting ? "Creating account..." : "Create account"}
                 </button>
               </div>
             </form>
 
-            <div className="d-flex justify-content-between align-items-center gap-3 mt-4 pt-4 border-top border-secondary border-opacity-25 text-sm text-secondary">
+            <div className="auth-footer">
               <span>Already registered?</span>
-              <Link to="/login" className="text-info text-decoration-none fw-semibold">Sign in</Link>
+              <Link to="/login">Sign in</Link>
             </div>
           </div>
         </div>

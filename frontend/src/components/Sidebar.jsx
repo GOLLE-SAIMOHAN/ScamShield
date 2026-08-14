@@ -36,10 +36,10 @@ export default function Sidebar({ isOpen, onClose }) {
         />
       ) : null}
 
-      <aside className={`sidebar d-flex flex-column bg-dark bg-opacity-95 border-end border-secondary border-opacity-25 backdrop-blur z-3 ${isOpen ? 'is-open' : ''}`}>
+      <aside className={`sidebar d-flex flex-column z-3 ${isOpen ? "is-open" : ""}`}>
         <div className="brand-block d-flex align-items-center justify-content-between p-4 border-bottom border-secondary border-opacity-15">
           <div className="d-flex align-items-center gap-2">
-            <span className="brand-mark bg-info text-dark fw-extrabold d-flex align-items-center justify-content-center rounded-3 fs-5" style={{ width: "38px", height: "38px" }}>S</span>
+            <span className="brand-mark d-flex align-items-center justify-content-center rounded-3 fs-5">S</span>
             <div>
               <strong className="text-light d-block h6 mb-0">ScamShield</strong>
               <small className="text-muted small">Threat Defense</small>
@@ -62,9 +62,7 @@ export default function Sidebar({ isOpen, onClose }) {
               to={item.to}
               className={({ isActive }) =>
                 `nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-3 text-decoration-none transition-all ${
-                  isActive
-                    ? "bg-info bg-opacity-15 text-info border border-info border-opacity-25 fw-semibold"
-                    : "text-muted hover-bg-dark hover-text-light"
+                  isActive ? "active" : ""
                 }`
               }
               onClick={handleLinkClick}
@@ -76,14 +74,12 @@ export default function Sidebar({ isOpen, onClose }) {
         </nav>
 
         <div className="p-3 border-top border-secondary border-opacity-15">
-          <div className="d-flex align-items-center justify-content-between p-2.5 rounded-3 bg-dark bg-opacity-60 border border-info border-opacity-20">
+          <div className="sidebar-status d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center gap-2">
-              <span className="spinner-grow spinner-grow-sm text-info" role="status" aria-hidden="true" />
+              <span className="sidebar-pulse" role="status" aria-hidden="true" />
               <small className="text-light fw-bold fs-8 text-uppercase tracking-wider">Engine Active</small>
             </div>
-            <span className="badge bg-info bg-opacity-20 text-info border border-info border-opacity-30 rounded-pill px-2 py-0.5 fs-9">
-              v2.5 AI
-            </span>
+            <span className="badge sidebar-badge">v2.5 AI</span>
           </div>
         </div>
       </aside>

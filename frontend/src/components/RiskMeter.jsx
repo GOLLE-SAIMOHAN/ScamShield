@@ -48,10 +48,12 @@ export default function RiskMeter({ score = 0, classification = "Safe" }) {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * animatedScore) / 100;
 
+  const riskClassName = getTextColorClass(classification);
+
   return (
-    <div className="d-flex flex-column align-items-center text-center p-4 bg-dark bg-opacity-70 border border-secondary border-opacity-25 rounded-4 shadow-sm w-100">
-      <div className="position-relative d-inline-flex align-items-center justify-content-center" style={{ width: "150px", height: "150px" }}>
-        <svg width="150" height="150" viewBox="0 0 150 150">
+    <div className="risk-meter-shell">
+      <div className="risk-meter-ring">
+        <svg width="150" height="150" viewBox="0 0 150 150" aria-label="Risk meter">
           <circle
             cx="75"
             cy="75"
@@ -74,16 +76,14 @@ export default function RiskMeter({ score = 0, classification = "Safe" }) {
             transform="rotate(-90 75 75)"
           />
         </svg>
-        <div className="position-absolute d-flex flex-column align-items-center justify-content-center">
-          <span className="fw-bold fs-2 text-light" style={{ letterSpacing: "-1px" }}>{animatedScore}</span>
-          <span className="text-uppercase text-muted fs-8 fw-semibold tracking-wider">Risk Score</span>
+        <div className="risk-meter-value-wrap">
+          <span className="risk-meter-value">{animatedScore}</span>
+          <span className="risk-meter-label">Risk Score</span>
         </div>
       </div>
-      <div className="mt-3">
-        <h4 className={`h5 fw-bold mb-1 ${getTextColorClass(classification)}`}>
-          {classification}
-        </h4>
-        <span className="text-muted small">Threat Classification</span>
+      <div className="risk-meter-meta">
+        <h4 className={`risk-meter-classification ${riskClassName}`}>{classification}</h4>
+        <span className="risk-meter-caption">Threat Classification</span>
       </div>
     </div>
   );

@@ -24,62 +24,57 @@ export default function ThreatIntelCard({ threatIntel, domainName }) {
   };
 
   return (
-    <div className="card border border-secondary border-opacity-25 bg-dark bg-opacity-70 text-white rounded-4 shadow-sm w-100 overflow-hidden mb-4 animate-fade-in">
-      <div className="card-header border-bottom border-secondary border-opacity-25 bg-dark bg-opacity-40 p-3 d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center">
-          <i className="bi bi-server text-info me-2 fs-5 animate-pulse" />
-          <h3 className="h6 fw-bold mb-0 text-light text-uppercase tracking-wider">Threat Database Record</h3>
+    <div className="threat-intel-card glass-panel animate-fade-in">
+      <div className="threat-intel-header">
+        <div className="d-flex align-items-center gap-2">
+          <i className="bi bi-server" />
+          <h3>Threat Database Record</h3>
         </div>
-        <span className={`badge ${isKnown ? 'text-bg-warning' : 'text-bg-success'} text-uppercase tracking-wider fs-8`}>
-          {isKnown ? 'Known Threat' : 'New Domain'}
+        <span className={`threat-intel-badge ${isKnown ? "warning" : "success"}`}>
+          {isKnown ? "Known Threat" : "New Domain"}
         </span>
       </div>
-      <div className="card-body p-4">
-        <h4 className="h5 fw-bold text-light mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
-          <span className="text-info">{domain}</span>
-          <span className={`badge ${getReputationBadge(reputation)} text-uppercase tracking-wider fs-8`}>
+
+      <div className="threat-intel-body">
+        <div className="threat-intel-title-row">
+          <span className="threat-intel-domain">{domain}</span>
+          <span className={`threat-intel-reputation ${getReputationBadge(reputation)}`}>
             Reputation: {reputation}
           </span>
-        </h4>
-        
-        <div className="row g-3">
-          <div className="col-6 col-md-4">
-            <div className="bg-dark bg-opacity-40 p-3 rounded-3 border border-secondary border-opacity-10 text-center">
-              <span className="d-block text-muted small text-uppercase tracking-wider mb-1">Scan Count</span>
-              <strong className="fs-4 text-light">{scanCount}</strong>
-            </div>
+        </div>
+
+        <div className="threat-intel-grid">
+          <div className="threat-intel-metric">
+            <span>Scan Count</span>
+            <strong>{scanCount}</strong>
           </div>
-          <div className="col-6 col-md-4">
-            <div className="bg-dark bg-opacity-40 p-3 rounded-3 border border-secondary border-opacity-10 text-center">
-              <span className="d-block text-muted small text-uppercase tracking-wider mb-1">Average Risk</span>
-              <strong className="fs-4 text-light">{avgRisk}%</strong>
-            </div>
+          <div className="threat-intel-metric">
+            <span>Average Risk</span>
+            <strong>{avgRisk}%</strong>
           </div>
-          <div className="col-12 col-md-4">
-            <div className="bg-dark bg-opacity-40 p-3 rounded-3 border border-secondary border-opacity-10 text-center">
-              <span className="d-block text-muted small text-uppercase tracking-wider mb-1">Highest Risk</span>
-              <strong className="fs-4 text-danger">{maxRisk}%</strong>
-            </div>
+          <div className="threat-intel-metric danger">
+            <span>Highest Risk</span>
+            <strong>{maxRisk}%</strong>
           </div>
         </div>
 
-        <div className="mt-4 pt-3 border-top border-secondary border-opacity-15 text-muted small">
-          <div className="d-flex justify-content-between py-1">
-            <span>First Seen:</span>
-            <strong className="text-light">{formatDateTime(firstSeen)}</strong>
+        <div className="threat-intel-details">
+          <div>
+            <span>First Seen</span>
+            <strong>{formatDateTime(firstSeen)}</strong>
           </div>
-          <div className="d-flex justify-content-between py-1">
-            <span>Last Analyzed:</span>
-            <strong className="text-light">{formatDateTime(lastSeen)}</strong>
+          <div>
+            <span>Last Analyzed</span>
+            <strong>{formatDateTime(lastSeen)}</strong>
           </div>
         </div>
 
         {reasons && reasons.length > 0 ? (
-          <div className="mt-4">
-            <h5 className="fs-7 text-uppercase fw-bold text-muted tracking-wider mb-2">Aggregated Threat Indicators</h5>
-            <div className="d-flex flex-wrap gap-2">
+          <div className="threat-intel-tags-wrap">
+            <h5>Aggregated Threat Indicators</h5>
+            <div className="threat-intel-tags">
               {reasons.map((reason, idx) => (
-                <span key={idx} className="badge bg-dark bg-opacity-50 text-secondary border border-secondary border-opacity-25 px-2.5 py-1.5 rounded-pill fs-8">
+                <span key={idx} className="threat-intel-tag">
                   {reason}
                 </span>
               ))}
