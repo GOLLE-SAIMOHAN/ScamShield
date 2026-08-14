@@ -4,9 +4,8 @@ import { useTheme } from "../hooks/useTheme.js";
 
 const navItems = [
   { to: "/", label: "Home" },
-  { to: "/scanner", label: "AI Security Scanner" },
-  { to: "/threat-intelligence", label: "Threat Intelligence" },
-  { to: "/history", label: "History & Analytics" },
+  { to: "/login", label: "Login" },
+  { to: "/register", label: "Register" },
   { to: "/about", label: "About" },
 ];
 

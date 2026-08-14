@@ -3,9 +3,10 @@ import { useAuth } from "../hooks/useAuth.js";
 
 const navItems = [
   { to: "/dashboard", icon: "bi-speedometer2", label: "Dashboard" },
-  { to: "/scanner", icon: "bi-shield-check", label: "Scanner" },
+  { to: "/scan", icon: "bi-shield-check", label: "New Scan" },
   { to: "/threat-intelligence", icon: "bi-bug", label: "Threat Intel" },
-  { to: "/history", icon: "bi-clock-history", label: "History" },
+  { to: "/history", icon: "bi-clock-history", label: "Scan History" },
+  { to: "/analytics", icon: "bi-graph-up-arrow", label: "Analytics" },
   { to: "/profile", icon: "bi-person", label: "Profile" },
   { to: "/settings", icon: "bi-gear", label: "Settings" },
 ];

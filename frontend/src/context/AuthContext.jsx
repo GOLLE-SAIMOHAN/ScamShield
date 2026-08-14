@@ -1,40 +1,69 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
-import * as authService from "../services/authService.js";
-
-const DEFAULT_USER = {
-  id: "guest-analyst",
-  name: "Security Analyst",
-  email: "analyst@scamshield.local",
-  role: "Lead Analyst",
-};
+import {
+  clearStoredToken,
+  getCurrentUser,
+  getStoredToken,
+  login as loginRequest,
+  logout as logoutRequest,
+  register as registerRequest,
+} from "../services/authService.js";
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(DEFAULT_USER);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
-    setIsLoading(false);
-    return DEFAULT_USER;
+    const token = getStoredToken();
+    if (!token) {
+      setUser(null);
+      setIsLoading(false);
+      return null;
+    }
+
+    try {
+      const userData = await getCurrentUser();
+      setUser(userData || null);
+      return userData;
+    } catch (error) {
+      clearStoredToken();
+      setUser(null);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
   const login = useCallback(async (credentials) => {
-    return DEFAULT_USER;
+    const payload = await loginRequest(credentials);
+    setUser(payload?.user || null);
+    return payload;
   }, []);
 
   const register = useCallback(async (formPayload) => {
-    return DEFAULT_USER;
+    const payload = await registerRequest(formPayload);
+    setUser(payload?.user || null);
+    return payload;
   }, []);
 
   const logout = useCallback(async () => {
-    setUser(DEFAULT_USER);
+    try {
+      await logoutRequest();
+    } finally {
+      clearStoredToken();
+      setUser(null);
+    }
   }, []);
 
   const value = useMemo(
     () => ({
-      user: user || DEFAULT_USER,
-      isAuthenticated: true,
+      user,
+      isAuthenticated: Boolean(user),
       isLoading,
       login,
       logout,
