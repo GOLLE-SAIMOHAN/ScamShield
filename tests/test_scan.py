@@ -185,3 +185,20 @@ def test_scan_history_requires_authentication(client):
 def test_scan_history_accessible_when_authenticated(client, auth_headers):
     response = client.get("/api/scans/history", headers=auth_headers)
     assert response.status_code == 200
+
+
+def test_authenticated_url_scan_is_saved_to_history(client, auth_headers):
+    response = client.post(
+        "/api/scan/url",
+        json={"url": "https://account-security-paypal.example/login"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    scan = response.get_json()
+    assert scan["scan_id"].startswith("scan-")
+
+    history_response = client.get("/api/scans/history", headers=auth_headers)
+    assert history_response.status_code == 200
+    history = history_response.get_json()["data"]
+    assert any(item["scan_id"] == scan["scan_id"] for item in history["items"])

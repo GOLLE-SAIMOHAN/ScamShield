@@ -46,27 +46,7 @@ export default function Navbar({ onToggleSidebar }) {
         </Link>
       </div>
 
-      <div className="flex-grow-1 mx-4 d-none d-md-block" style={{ maxWidth: "420px" }}>
-        <div className="topbar-search input-group input-group-sm overflow-hidden">
-          <span className="input-group-text bg-transparent border-0 text-muted">
-            <i className="bi bi-search" />
-          </span>
-          <input
-            type="text"
-            className="form-control bg-transparent border-0 text-white placeholder-secondary"
-            placeholder="Search threats, URLs, and reports..."
-            aria-label="Search"
-            disabled
-          />
-        </div>
-      </div>
-
       <div className="d-flex align-items-center gap-3">
-        <button className="topbar-action-button" type="button" aria-label="Notifications">
-          <i className="bi bi-bell fs-5" />
-          <span className="notification-dot" />
-        </button>
-
         <div className="position-relative" ref={dropdownRef}>
           <button
             className="user-menu-button"

@@ -1,17 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PageContainer from "../layouts/PageContainer.jsx";
+import { getDashboardSummary } from "../services/dashboardService.js";
 import { getDomainThreat, getTopThreats } from "../services/threatService.js";
 import ThreatIntelCard from "../components/ThreatIntelCard.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import ErrorAlert from "../components/ErrorAlert.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import { formatDateTime, riskBadgeClass } from "../utils/formatters.js";
-
-const QUICK_STATS = [
-  { label: "Signals Monitored", value: "120K+", detail: "reputation checks" },
-  { label: "Live Sources", value: "18", detail: "threat feeds" },
-  { label: "Coverage", value: "24/7", detail: "watch posture" },
-];
 
 export default function ThreatIntelligence() {
   const [domain, setDomain] = useState("");
@@ -20,6 +15,18 @@ export default function ThreatIntelligence() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [summary, setSummary] = useState({ total_scans: 0, known_threats: 0 });
+
+  useEffect(() => {
+    getDashboardSummary()
+      .then((response) => setSummary(response.data || { total_scans: 0, known_threats: 0 }))
+      .catch(() => setSummary({ total_scans: 0, known_threats: 0 }));
+  }, []);
+
+  const quickStats = [
+    { label: "Scans Processed", value: summary.total_scans ?? 0, detail: "stored investigations" },
+    { label: "Known Threats", value: summary.known_threats ?? 0, detail: "tracked domains" },
+  ];
 
   const lookupDomain = async (event) => {
     event.preventDefault();
@@ -74,7 +81,7 @@ export default function ThreatIntelligence() {
             </p>
           </div>
           <div className="threat-hero-stats">
-            {QUICK_STATS.map((stat) => (
+            {quickStats.map((stat) => (
               <div key={stat.label} className="threat-stat-card">
                 <strong>{stat.value}</strong>
                 <span>{stat.label}</span>

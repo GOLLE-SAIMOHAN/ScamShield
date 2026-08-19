@@ -8,6 +8,13 @@ export function scanUrl(url) {
   });
 }
 
+export function scanUrlAuthenticated(url) {
+  return apiRequest("/api/scan/url", {
+    method: "POST",
+    body: { url },
+  });
+}
+
 export function getScanHistory({ page = 1, perPage = 10, search = "", classification = "" } = {}) {
   const params = new URLSearchParams({
     page: String(page),
@@ -56,6 +63,18 @@ export function getLocalHistory({ page = 1, perPage = 10 } = {}) {
     };
   } catch (e) {
     return { items: [], pagination: { page: 1, per_page: perPage, total: 0, total_pages: 0, has_next: false, has_prev: false } };
+  }
+}
+
+export function deleteLocalHistory(scanId) {
+  try {
+    const items = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || "[]");
+    localStorage.setItem(
+      LOCAL_HISTORY_KEY,
+      JSON.stringify(items.filter((item) => item.scan_id !== scanId)),
+    );
+  } catch (e) {
+    // Ignore storage errors
   }
 }
 

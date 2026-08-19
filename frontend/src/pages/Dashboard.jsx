@@ -14,10 +14,10 @@ import {
 } from "../services/dashboardService.js";
 
 const EMPTY_SUMMARY = {
-  total_scans: 142,
-  threats_detected: 38,
-  safe_urls: 94,
-  known_threats: 10,
+  total_scans: 0,
+  threats_detected: 0,
+  safe_urls: 0,
+  known_threats: 0,
 };
 
 const MODULE_CARDS = [
@@ -104,28 +104,28 @@ export default function Dashboard() {
       {
         icon: "bi-search",
         title: "Total Scans",
-        value: formatCount(summary.total_scans || 142),
+        value: formatCount(summary.total_scans ?? 0),
         description: "Multi-modal scans processed",
         variant: "info",
       },
       {
         icon: "bi-exclamation-triangle",
         title: "Threats Flagged",
-        value: formatCount(summary.threats_detected || 38),
+        value: formatCount(summary.threats_detected ?? 0),
         description: "Phishing & Deepfake alerts",
         variant: "danger",
       },
       {
         icon: "bi-shield-check",
         title: "Verified Safe",
-        value: formatCount(summary.safe_urls || 94),
+        value: formatCount(summary.safe_urls ?? 0),
         description: "Authentic sources & links",
         variant: "success",
       },
       {
         icon: "bi-database-fill-gear",
         title: "Threat Intel DB",
-        value: formatCount(summary.known_threats || 10),
+        value: formatCount(summary.known_threats ?? 0),
         description: "Active fraud signatures",
         variant: "warning",
       },
@@ -158,6 +158,9 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      {Number(summary.total_scans ?? 0) === 0 ? (
+        <div className="text-muted small mb-5">No scans yet - run your first scan.</div>
+      ) : null}
 
       {/* Multi-Modal Module Direct Launchers */}
       <div className="dashboard-section-header">
@@ -259,25 +262,28 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="dashboard-feed-list">
-              {[
-                { label: "hdfc-verify-pin.com", type: "Phishing Domain", risk: "CRITICAL" },
-                { label: "AI Voice Clone Call (+91 98...)", type: "Audio Deepfake", risk: "HIGH" },
-                { label: "bit.ly/rbi-free-bonus", type: "Urgency Fraud Link", risk: "HIGH" },
-                { label: "edited_id_card.png", type: "Forged Document", risk: "MEDIUM" },
-              ].map((item, idx) => (
-                <div key={idx} className="dashboard-feed-item">
-                  <div className="dashboard-feed-icon">
-                    <i className="bi bi-bug-fill" />
-                  </div>
-                  <div>
-                    <p>{item.label}</p>
-                    <div className="dashboard-feed-meta">
-                      <span className="dashboard-feed-risk">{item.risk}</span>
-                      <span>• {item.type}</span>
+              {threatFeed.length > 0 ? (
+                threatFeed.map((item, idx) => (
+                  <div key={item.threat_id || item.domain || idx} className="dashboard-feed-item">
+                    <div className="dashboard-feed-icon">
+                      <i className="bi bi-bug-fill" />
+                    </div>
+                    <div>
+                      <p>{item.domain || item.label || "Unknown domain"}</p>
+                      <div className="dashboard-feed-meta">
+                        <span className="dashboard-feed-risk">{(item.severity || "unknown").toUpperCase()}</span>
+                        <span>• {item.classification || item.label || "Threat intelligence"}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <EmptyState
+                  icon="bi-rss"
+                  title="No Threats Yet"
+                  description="Threat intelligence will appear here after scans identify known risks."
+                />
+              )}
             </div>
           </div>
         </div>

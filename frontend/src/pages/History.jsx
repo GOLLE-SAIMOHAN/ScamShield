@@ -4,7 +4,12 @@ import EmptyState from "../components/EmptyState.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import ErrorAlert from "../components/ErrorAlert.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
-import { deleteScan, getScanHistory, getLocalHistory } from "../services/scanService.js";
+import {
+  deleteLocalHistory,
+  deleteScan,
+  getLocalHistory,
+  getScanHistory,
+} from "../services/scanService.js";
 import { formatDateTime } from "../utils/formatters.js";
 
 const CLASSIFICATION_OPTIONS = [
@@ -87,6 +92,7 @@ export default function History() {
     setPagination((current) => ({ ...current, page: 1 }));
   }
 
+  // Manual-only verification: no frontend test suite currently covers local vs backend deletion.
   async function handleDelete(scanId) {
     if (!scanId) return;
 
@@ -94,7 +100,11 @@ export default function History() {
     setError("");
 
     try {
-      await deleteScan(scanId);
+      if (scanId.startsWith("local-")) {
+        deleteLocalHistory(scanId);
+      } else {
+        await deleteScan(scanId);
+      }
       const nextPage =
         items.length === 1 && pagination.page > 1 ? pagination.page - 1 : pagination.page;
       setPagination((current) => ({ ...current, page: nextPage }));

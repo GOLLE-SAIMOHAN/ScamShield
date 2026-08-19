@@ -7,7 +7,13 @@ import ScannerResult from "../components/ScannerResult.jsx";
 import LoadingState from "../components/LoadingState.jsx";
 import ErrorAlert from "../components/ErrorAlert.jsx";
 import EmptyState from "../components/EmptyState.jsx";
-import { analyzeContent, analyzeMedia, scanUrl } from "../services/scanService.js";
+import {
+  analyzeContent,
+  analyzeMedia,
+  scanUrl,
+  scanUrlAuthenticated,
+} from "../services/scanService.js";
+import { getStoredToken } from "../services/apiClient.js";
 
 const SCAN_TYPES = [
   {
@@ -152,52 +158,20 @@ export default function Scanner() {
     setIsScanning(true);
     try {
       if (activeTypeId === "url") {
-        const response = await scanUrl(inputs.url.trim());
+        const response = await (getStoredToken()
+          ? scanUrlAuthenticated(inputs.url.trim())
+          : scanUrl(inputs.url.trim()));
         setResult(normalizeUrlResult(response, inputs.url.trim()));
-        try {
-          // store anonymous history entry
-          const entry = {
-            scan_id: `local-${Date.now()}`,
-            url: inputs.url.trim(),
-            risk_score: response.risk_score ?? response.scam_probability ?? 0,
-            classification: response.classification || response.risk_level || "Unknown",
-            scan_date: new Date().toISOString(),
-          };
-          // dynamic import to avoid circular service deps in older bundles
-          import("../services/scanService.js").then((mod) => mod.addLocalHistory(entry)).catch(() => {});
-        } catch (e) {
-          // ignore local history failures
-        }
       } else if (activeTypeId === "image" || activeTypeId === "video") {
         const metadata = await loadMediaMetadata(selectedFile);
         const response = await analyzeMedia(selectedFile, metadata);
         setResult(normalizeMediaResult(response, selectedFile));
-        try {
-          const entry = {
-            scan_id: `local-${Date.now()}`,
-            url: selectedFile?.name || "uploaded-media",
-            risk_score: response.ai_likelihood ?? response.authenticity_score ?? 0,
-            classification: response.risk_level || response.result || "Unknown",
-            scan_date: new Date().toISOString(),
-          };
-          import("../services/scanService.js").then((mod) => mod.addLocalHistory(entry)).catch(() => {});
-        } catch (e) {}
       } else {
         const response = await analyzeContent(
           inputs[activeTypeId].trim(),
           contentTypeFor(activeTypeId),
         );
         setResult(normalizeTextResult(response, inputs[activeTypeId].trim(), activeTypeId));
-        try {
-          const entry = {
-            scan_id: `local-${Date.now()}`,
-            url: inputs[activeTypeId].slice(0, 140),
-            risk_score: response.scam_probability ?? response.risk_score ?? 0,
-            classification: response.risk_level || response.classification || "Unknown",
-            scan_date: new Date().toISOString(),
-          };
-          import("../services/scanService.js").then((mod) => mod.addLocalHistory(entry)).catch(() => {});
-        } catch (e) {}
       }
     } catch (requestError) {
       setError(requestError.message || "Scan failed. Please try again.");
