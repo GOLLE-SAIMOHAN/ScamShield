@@ -1,4 +1,5 @@
 from io import BytesIO
+from unittest.mock import patch
 
 
 def test_check_url_returns_analysis(client):
@@ -82,6 +83,82 @@ def test_analyze_news_returns_a_classification(client):
     body = response.get_json()
     assert body["classification"] in {"Fake News", "Potential Misinformation", "Likely Legitimate News"}
     assert "scam_probability" in body
+
+
+def test_analyze_news_fact_check_false_claim_overrides_keywords(client):
+    fact_check = {
+        "checked": True,
+        "matches_found": True,
+        "verdicts": [{
+            "rating": "False",
+            "publisher": "PolitiFact",
+            "url": "https://factcheck.example/false",
+        }],
+        "error": None,
+    }
+    with patch(
+        "scamshield.ai.detector.FactCheckService.search_claims",
+        return_value=fact_check,
+    ):
+        response = client.post(
+            "/api/analyze",
+            json={"content_type": "news", "content": "A plain claim"},
+        )
+
+    body = response.get_json()
+    assert body["classification"] == "Fake News"
+    assert body["scam_probability"] >= 80
+    assert any("Fact-check match" in item["name"] for item in body["indicators"])
+
+
+def test_analyze_news_fact_check_true_claim_is_not_fake_news(client):
+    fact_check = {
+        "checked": True,
+        "matches_found": True,
+        "verdicts": [{
+            "rating": "True",
+            "publisher": "Reuters Fact Check",
+            "url": "https://factcheck.example/true",
+        }],
+        "error": None,
+    }
+    with patch(
+        "scamshield.ai.detector.FactCheckService.search_claims",
+        return_value=fact_check,
+    ):
+        response = client.post(
+            "/api/analyze",
+            json={"content_type": "news", "content": "BREAKING SHOCKING"},
+        )
+
+    body = response.get_json()
+    assert body["classification"] != "Fake News"
+    assert body["scam_probability"] <= 15
+
+
+def test_analyze_news_without_fact_check_match_keeps_keyword_score(client):
+    fact_check = {
+        "checked": True,
+        "matches_found": False,
+        "verdicts": [],
+        "error": None,
+    }
+    with patch(
+        "scamshield.ai.detector.FactCheckService.search_claims",
+        return_value=fact_check,
+    ):
+        response = client.post(
+            "/api/analyze",
+            json={
+                "content_type": "news",
+                "content": "BREAKING EXCLUSIVE VIRAL SHOCKING MUST READ",
+            },
+        )
+
+    body = response.get_json()
+    assert body["classification"] == "Likely Legitimate News"
+    assert body["scam_probability"] == 28
+    assert any(item["name"] == "No independent fact-check found" for item in body["indicators"])
 
 
 def test_analyze_media_accepts_file_upload(client):

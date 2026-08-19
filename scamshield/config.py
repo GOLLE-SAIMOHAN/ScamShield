@@ -76,6 +76,7 @@ class Config:
     SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
     SMTP_FROM = os.environ.get("SMTP_FROM", "no-reply@scamshield.local")
     FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "http://127.0.0.1:5000")
+    GOOGLE_FACT_CHECK_API_KEY = os.environ.get("GOOGLE_FACT_CHECK_API_KEY", "")
     LEGACY_SQLITE_PATH = os.environ.get(
         "SCAMSHIELD_DATABASE_PATH",
         str(PROJECT_ROOT / "scamshield.db"),

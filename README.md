@@ -105,6 +105,8 @@ flowchart LR
 
 Notes:
 - Production URL and content detection uses explainable heuristic analyzers; it does not load a trained machine-learning model.
+- News content uses a two-tier signal when `GOOGLE_FACT_CHECK_API_KEY` is configured: the Google Fact Check Tools API first looks for independently reviewed claims and can confirm or override the keyword result. When no reviewed claim is found, ScamShield falls back to keyword/style heuristics that detect sensationalist writing, not verified truth.
+- `GOOGLE_FACT_CHECK_API_KEY` is optional. Leave it unset for a fast keyword-only fallback; API failures and unavailable results degrade gracefully without blocking analysis.
 - The offline Random Forest trainer is retained at `experiments/train_model.py` with its dependencies in `requirements-experiments.txt`. It is not part of the live application pipeline.
 - Image forensic checks exist in `scamshield/ai/detector.py` and use pixel metrics. Pillow is optional and the code gracefully falls back when not present.
 - Deepfake frame-level models are not implemented; the code documents frame sampling as a recommended enhancement.

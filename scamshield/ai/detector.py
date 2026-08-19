@@ -9,6 +9,7 @@ from scamshield.detection.brand_signals import (
     HIGH_RISK_TLDS,
     SUSPICIOUS_HOSTNAME_PREFIXES,
 )
+from scamshield.services.fact_check_service import FactCheckService
 
 try:
     from PIL import Image, ImageChops, ImageFilter, ImageStat
@@ -65,6 +66,11 @@ NEWS_TERMS = {
     "conspiracy", "shocking", "urgent update", "unconfirmed", "must read",
 }
 
+FALSE_FACT_CHECK_TERMS = (
+    "false", "fake", "pants on fire", "misleading", "fabricated", "incorrect",
+)
+TRUE_FACT_CHECK_TERMS = ("true", "correct", "accurate")
+
 
 def _contains_any(text, terms):
     lowered = text.lower()
@@ -107,6 +113,12 @@ def analyze_content(content, content_type="message"):
 
     indicators = []
     score = 8
+    fact_check = {
+        "checked": False,
+        "matches_found": False,
+        "verdicts": [],
+        "error": "not_applicable",
+    }
 
     urgency = _contains_any(text, URGENCY_TERMS)
     if urgency:
@@ -233,6 +245,59 @@ def analyze_content(content, content_type="message"):
                 "matches": news_signals[:5],
             })
 
+        fact_check = FactCheckService().search_claims(text)
+        if fact_check["matches_found"]:
+            false_verdict = next(
+                (
+                    verdict for verdict in fact_check["verdicts"]
+                    if any(
+                        term in verdict["rating"].lower()
+                        for term in FALSE_FACT_CHECK_TERMS
+                    )
+                ),
+                None,
+            )
+            true_verdict = next(
+                (
+                    verdict for verdict in fact_check["verdicts"]
+                    if any(
+                        term in verdict["rating"].lower()
+                        for term in TRUE_FACT_CHECK_TERMS
+                    )
+                ),
+                None,
+            )
+            if false_verdict:
+                score = max(score, 80)
+                indicators.append({
+                    "name": "Fact-check match: false claim",
+                    "detail": (
+                        f"Independently fact-checked as '{false_verdict['rating']}' "
+                        f"by {false_verdict['publisher']}."
+                    ),
+                    "matches": [false_verdict["url"]],
+                })
+            elif true_verdict:
+                score = min(score, 15)
+                indicators.append({
+                    "name": "Fact-check match: verified claim",
+                    "detail": (
+                        f"Independently fact-checked as '{true_verdict['rating']}' "
+                        f"by {true_verdict['publisher']}."
+                    ),
+                    "matches": [true_verdict["url"]],
+                })
+        elif fact_check["checked"]:
+            indicators.append({
+                "name": "No independent fact-check found",
+                "detail": (
+                    "This claim has not been reviewed by a known fact-checking "
+                    "organization; result is based on writing-style heuristics "
+                    "only, not verified truth."
+                ),
+                "matches": [],
+            })
+
     scam_probability = min(100, score)
     risk_level = _risk_label(scam_probability)
     classification = _build_text_classification(content_type, scam_probability)
@@ -254,6 +319,7 @@ def analyze_content(content, content_type="message"):
             "matches": [],
         }],
         "urls": url_findings,
+        "fact_check": fact_check,
         "recommended_action": _recommended_action(scam_probability),
         "analyzed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
