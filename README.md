@@ -98,12 +98,14 @@ flowchart LR
 ## AI Detection Pipeline
 
 1. Input normalization (URL scheme, text trimming)
-2. Analyzer chain (URL analyzer → domain/ssl/keyword/reputation analyzers)
+2. Rule-based analyzer chain (URL analyzer → domain/ssl/keyword/reputation analyzers)
 3. Findings aggregation and scoring (risk score → label)
 4. Explanation composition via `ExplanationService`
 5. Persistence: `ThreatIntelligenceService` and `HistoryRepository`
 
 Notes:
+- Production URL and content detection uses explainable heuristic analyzers; it does not load a trained machine-learning model.
+- The offline Random Forest trainer is retained at `experiments/train_model.py` with its dependencies in `requirements-experiments.txt`. It is not part of the live application pipeline.
 - Image forensic checks exist in `scamshield/ai/detector.py` and use pixel metrics. Pillow is optional and the code gracefully falls back when not present.
 - Deepfake frame-level models are not implemented; the code documents frame sampling as a recommended enhancement.
 

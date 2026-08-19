@@ -13,10 +13,10 @@ from scamshield.detection.scoring import score_results
 class ScanEngine:
     """Coordinate URL analyzers and scoring."""
 
-    def __init__(self) -> None:
+    def __init__(self, whois_lookup=None) -> None:
         self.analyzers = [
             UrlAnalyzer(),
-            DomainAnalyzer(),
+            DomainAnalyzer(whois_lookup=whois_lookup),
             SslAnalyzer(),
             KeywordAnalyzer(),
             ReputationAnalyzer(),

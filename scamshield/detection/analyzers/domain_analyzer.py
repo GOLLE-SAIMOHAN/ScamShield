@@ -5,6 +5,11 @@ from difflib import SequenceMatcher
 import ipaddress
 from urllib.parse import urlparse
 
+from scamshield.detection.brand_signals import (
+    BRANDS,
+    HIGH_RISK_TLDS,
+    SUSPICIOUS_HOSTNAME_PREFIXES,
+)
 from scamshield.detection.models import AnalyzerFinding, AnalyzerResult
 
 try:
@@ -12,17 +17,14 @@ try:
 except ImportError:  # pragma: no cover - optional dependency.
     whois = None
 
-HIGH_RISK_TLDS = {"zip", "mov", "top", "xyz", "click", "country", "tk", "ml", "ga"}
-BRANDS = {
-    "sbi", "hdfc", "icici", "axis", "paytm", "phonepe", "google", "amazon",
-    "flipkart", "whatsapp", "microsoft", "telegram",
-}
-
 
 class DomainAnalyzer:
     """Analyze domain age, TLD, and hostname impersonation signals."""
 
     name = "domain"
+
+    def __init__(self, whois_lookup=None) -> None:
+        self._whois_lookup = whois_lookup or _get_creation_date
 
     def analyze(self, url: str) -> AnalyzerResult:
         """Return domain-level findings."""
@@ -44,23 +46,34 @@ class DomainAnalyzer:
                 AnalyzerFinding(self.name, f"Domain uses higher-risk TLD .{tld}.", 14)
             )
 
-        if any(term in host for term in ("secure-", "verify-", "login-", "account-")):
+        if any(term in host for term in SUSPICIOUS_HOSTNAME_PREFIXES):
             findings.append(
                 AnalyzerFinding(self.name, "Hostname contains suspicious prefixes.", 12)
             )
 
-        lookalike = _closest_brand(domain_name)
-        if lookalike:
+        stuffed_brand = _brand_in_host(host, registered_domain)
+        if stuffed_brand:
             findings.append(
                 AnalyzerFinding(
                     self.name,
-                    f"Domain looks similar to {lookalike}.",
+                    f"Hostname references brand '{stuffed_brand}' outside its official domain.",
                     18,
-                    metadata={"brand": lookalike},
+                    metadata={"brand": stuffed_brand},
                 )
             )
+        else:
+            lookalike = _closest_brand(domain_name)
+            if lookalike:
+                findings.append(
+                    AnalyzerFinding(
+                        self.name,
+                        f"Domain looks similar to {lookalike}.",
+                        18,
+                        metadata={"brand": lookalike},
+                    )
+                )
 
-        creation_date = _get_creation_date(registered_domain)
+        creation_date = self._whois_lookup(registered_domain)
         if creation_date is None:
             findings.append(
                 AnalyzerFinding(
@@ -106,6 +119,13 @@ def _is_ip_address(host: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+def _brand_in_host(host: str, registered_domain: str) -> str | None:
+    for brand in BRANDS:
+        if brand in host and registered_domain != f"{brand}.com":
+            return brand
+    return None
 
 
 def _closest_brand(domain_name: str) -> str | None:

@@ -1,8 +1,14 @@
 import re
 import math
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 from urllib.parse import urlparse
+
+from scamshield.detection.brand_signals import (
+    BRANDS,
+    HIGH_RISK_TLDS,
+    SUSPICIOUS_HOSTNAME_PREFIXES,
+)
 
 try:
     from PIL import Image, ImageChops, ImageFilter, ImageStat
@@ -42,11 +48,6 @@ THREAT_TERMS = {
 SHORTENERS = {
     "bit.ly", "tinyurl.com", "goo.gl", "t.co", "is.gd", "ow.ly", "cutt.ly",
     "rebrand.ly", "shorturl.at", "lnkd.in",
-}
-
-BRANDS = {
-    "sbi", "hdfc", "icici", "axis", "paytm", "phonepe", "googlepay",
-    "amazon", "flipkart", "whatsapp", "telegram", "microsoft", "google",
 }
 
 EMAIL_TERMS = {
@@ -254,7 +255,7 @@ def analyze_content(content, content_type="message"):
         }],
         "urls": url_findings,
         "recommended_action": _recommended_action(scam_probability),
-        "analyzed_at": datetime.utcnow().isoformat() + "Z",
+        "analyzed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
 
@@ -326,6 +327,7 @@ def analyze_url(url):
     normalized = raw_url if re.match(r"^https?://", raw_url, re.I) else f"http://{raw_url}"
     parsed = urlparse(normalized)
     domain = parsed.netloc.lower()
+    hostname = (parsed.hostname or "").lower()
     path = parsed.path.lower()
 
     indicators = []
@@ -359,7 +361,17 @@ def analyze_url(url):
         score += 18
         indicators.append("URL shortener hides final destination")
 
-    if any(brand in domain and not domain.endswith(f"{brand}.com") for brand in BRANDS):
+    tld = hostname.rsplit(".", 1)[-1] if "." in hostname else ""
+    if tld in HIGH_RISK_TLDS:
+        score += 14
+        indicators.append(f"Domain uses higher-risk TLD .{tld}")
+
+    if any(prefix in hostname for prefix in SUSPICIOUS_HOSTNAME_PREFIXES):
+        score += 12
+        indicators.append("Hostname contains suspicious prefix (e.g. secure-, verify-)")
+
+    registered_domain = ".".join(hostname.split(".")[-2:]) if "." in hostname else hostname
+    if any(brand in hostname and registered_domain != f"{brand}.com" for brand in BRANDS):
         score += 14
         indicators.append("Possible brand impersonation")
 

@@ -16,6 +16,18 @@ def test_check_url_requires_url_field(client):
     assert response.status_code == 400
 
 
+def test_check_url_flags_brand_impersonation_phishing(client):
+    response = client.post(
+        "/api/check-url",
+        json={"url": "http://secure-paypal-login.verify-account.tk/reset"},
+    )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["risk_level"] in {"High", "Critical"}
+    assert body["risk_score"] >= 65
+    assert "Possible brand impersonation" in body["danger_indicators"]
+
+
 def test_analyze_message_returns_a_verdict(client):
     response = client.post(
         "/api/analyze",
