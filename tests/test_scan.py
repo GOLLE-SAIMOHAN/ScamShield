@@ -208,3 +208,66 @@ def test_authenticated_url_scan_is_saved_to_history(client, auth_headers):
     assert history_response.status_code == 200
     history = history_response.get_json()["data"]
     assert any(item["scan_id"] == scan["scan_id"] for item in history["items"])
+
+
+def test_strict_url_validation_accepts_valid_http_and_https(client):
+    assert client.post("/api/check-url", json={"url": "https://example.com"}).status_code == 200
+    assert client.post("/api/check-url", json={"url": "http://example.com"}).status_code == 200
+
+
+def test_strict_url_validation_rejects_disallowed_schemes(client):
+    disallowed = [
+        "javascript:alert(1)",
+        "data:text/html,<script>alert(1)</script>",
+        "file:///etc/hosts",
+        "ftp://example.com",
+        "gopher://example.com",
+        "blob:https://example.com",
+        "about:blank",
+    ]
+    for invalid_url in disallowed:
+        response = client.post("/api/check-url", json={"url": invalid_url})
+        assert response.status_code == 400
+        assert "Unsupported URL scheme" in response.get_json()["message"]
+
+
+def test_strict_url_validation_rejects_credentials_and_malformed_urls(client):
+    invalid_urls = [
+        "http://user:pass@example.com",
+        "http://user@example.com",
+        "http://",
+        "https://",
+    ]
+    for invalid_url in invalid_urls:
+        response = client.post("/api/check-url", json={"url": invalid_url})
+        assert response.status_code == 400
+
+
+def test_punycode_and_homograph_detection(client):
+    from scamshield.detection.analyzers.domain_analyzer import DomainAnalyzer
+
+    analyzer = DomainAnalyzer(whois_lookup=lambda d: None)
+
+    # 1. Punycode (xn--) domain
+    res_puny = analyzer.analyze("http://xn--pypal-4ve.com")
+    assert any("Punycode" in f.reason for f in res_puny.findings)
+
+    # 2. Unicode homograph (Cyrillic 'а')
+    res_homo = analyzer.analyze("http://pаypal.com")
+    assert any("homograph" in f.reason.lower() or "idn" in f.reason.lower() for f in res_homo.findings)
+
+    # 3. Legitimate normal domain
+    res_norm = analyzer.analyze("https://example.com")
+    assert not any("brand" in f.reason.lower() or "homograph" in f.reason.lower() for f in res_norm.findings)
+
+    # 4. Legitimate brand domain
+    res_brand = analyzer.analyze("https://paypal.com")
+    assert not any("impersonation" in f.reason.lower() for f in res_brand.findings)
+
+    # 5. Obvious typosquat (paypa1.com)
+    res_typo = analyzer.analyze("http://paypa1.com")
+    assert any("typosquat" in f.reason.lower() or "similar" in f.reason.lower() for f in res_typo.findings)
+
+    # 6. Nested brand impersonation (paypal.com.evil.example)
+    res_nested = analyzer.analyze("http://paypal.com.evil.example")
+    assert any("outside its official domain" in f.reason.lower() for f in res_nested.findings)

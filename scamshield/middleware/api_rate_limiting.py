@@ -5,6 +5,13 @@ Login attempts are limited per-email there; this module limits total
 request volume per client IP across all /api/ routes, which protects
 the more expensive endpoints (WHOIS lookups, SSL handshakes, media
 analysis) from being hammered.
+
+PRODUCTION DEPLOYMENT NOTE:
+Rate-limiting state is held in-process using sliding-window timestamp logs.
+For single-instance / single-worker deployments (e.g. Render / single Gunicorn worker),
+this in-memory tracker provides lightweight, zero-dependency protection.
+If scaling to multi-worker / load-balanced clusters in the future, migrate
+`_request_log` storage to a shared Redis instance.
 """
 
 from __future__ import annotations

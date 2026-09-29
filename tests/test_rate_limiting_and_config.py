@@ -35,13 +35,25 @@ def test_empty_mongodb_uri_uses_memory_in_non_strict_mode(app):
     from scamshield.repositories.database import get_database, reset_database_state
 
     reset_database_state()
-    app.config.update(MONGODB_URI="", MONGODB_STRICT=False)
+    app.config.update(MONGODB_URI="", MONGODB_STRICT=False, DEBUG=True)
 
     with app.app_context():
         database = get_database()
 
     assert database is not None
     assert app.config["DATABASE_BACKEND"] == "memory"
+
+
+def test_empty_mongodb_uri_raises_in_production_mode(app):
+    from scamshield.repositories.database import get_database, reset_database_state
+    from scamshield.repositories.exceptions import DatabaseConnectionError
+
+    reset_database_state()
+    app.config.update(MONGODB_URI="", MONGODB_STRICT=False, DEBUG=False)
+
+    with app.app_context():
+        with __import__("pytest").raises(DatabaseConnectionError, match="production"):
+            get_database()
 
 
 def test_config_raises_in_production_with_default_secrets(monkeypatch):

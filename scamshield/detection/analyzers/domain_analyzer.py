@@ -17,9 +17,33 @@ try:
 except ImportError:  # pragma: no cover - optional dependency.
     whois = None
 
+_HOMOGRAPH_MAP = {
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "х": "x", "у": "y",
+    "і": "i", "ј": "j", "ԁ": "d", "ԛ": "q", "ԝ": "w", "ѕ": "s", "б": "b",
+    "1": "l", "0": "o", "5": "s", "3": "e", "@": "a", "$": "s",
+}
+
+
+def _normalize_homographs(name: str) -> str:
+    """Convert confusable Unicode and digit substitutions to canonical ASCII."""
+    return "".join(_HOMOGRAPH_MAP.get(char, char) for char in name.lower())
+
+
+def _check_punycode_and_idn(host: str) -> tuple[str, bool, bool]:
+    """Return (unicode_host, is_idn, is_punycode)."""
+    is_punycode = "xn--" in host.lower()
+    unicode_host = host
+    if is_punycode:
+        try:
+            unicode_host = host.encode("ascii").decode("idna")
+        except Exception:
+            unicode_host = host
+    is_idn = is_punycode or any(ord(char) > 127 for char in host)
+    return unicode_host, is_idn, is_punycode
+
 
 class DomainAnalyzer:
-    """Analyze domain age, TLD, and hostname impersonation signals."""
+    """Analyze domain age, TLD, IDN/Punycode, and hostname impersonation signals."""
 
     name = "domain"
 
@@ -36,9 +60,31 @@ class DomainAnalyzer:
         if _is_ip_address(host):
             return AnalyzerResult(self.name, findings)
 
-        labels = host.split(".")
+        unicode_host, is_idn, is_punycode = _check_punycode_and_idn(host)
+        if is_punycode:
+            findings.append(
+                AnalyzerFinding(
+                    self.name,
+                    f"Domain uses Punycode encoding ({unicode_host}).",
+                    16,
+                    metadata={"punycode": host, "unicode": unicode_host},
+                )
+            )
+        elif is_idn:
+            findings.append(
+                AnalyzerFinding(
+                    self.name,
+                    "Domain contains Internationalized (IDN) Unicode characters.",
+                    14,
+                    metadata={"unicode": host},
+                )
+            )
+
+        # Inspect both ASCII host and decoded Unicode host
+        eval_host = unicode_host if is_punycode else host
+        labels = eval_host.split(".")
         tld = labels[-1] if labels else ""
-        registered_domain = ".".join(labels[-2:]) if len(labels) >= 2 else host
+        registered_domain = ".".join(labels[-2:]) if len(labels) >= 2 else eval_host
         domain_name = labels[-2] if len(labels) >= 2 else labels[0]
 
         if tld in HIGH_RISK_TLDS:
@@ -46,12 +92,12 @@ class DomainAnalyzer:
                 AnalyzerFinding(self.name, f"Domain uses higher-risk TLD .{tld}.", 14)
             )
 
-        if any(term in host for term in SUSPICIOUS_HOSTNAME_PREFIXES):
+        if any(term in eval_host for term in SUSPICIOUS_HOSTNAME_PREFIXES):
             findings.append(
                 AnalyzerFinding(self.name, "Hostname contains suspicious prefixes.", 12)
             )
 
-        stuffed_brand = _brand_in_host(host, registered_domain)
+        stuffed_brand = _brand_in_host(eval_host, registered_domain)
         if stuffed_brand:
             findings.append(
                 AnalyzerFinding(
@@ -62,16 +108,29 @@ class DomainAnalyzer:
                 )
             )
         else:
-            lookalike = _closest_brand(domain_name)
-            if lookalike:
+            norm_name = _normalize_homographs(domain_name)
+            if norm_name != domain_name and norm_name in BRANDS and registered_domain != f"{norm_name}.com":
                 findings.append(
                     AnalyzerFinding(
                         self.name,
-                        f"Domain looks similar to {lookalike}.",
-                        18,
-                        metadata={"brand": lookalike},
+                        f"Domain uses homograph or typosquat character substitution for '{norm_name}'.",
+                        20,
+                        metadata={"brand": norm_name, "substituted": domain_name},
                     )
                 )
+            else:
+                lookalike = _closest_brand(domain_name) or (
+                    _closest_brand(norm_name) if norm_name != domain_name else None
+                )
+                if lookalike:
+                    findings.append(
+                        AnalyzerFinding(
+                            self.name,
+                            f"Domain looks similar to {lookalike}.",
+                            18,
+                            metadata={"brand": lookalike},
+                        )
+                    )
 
         creation_date = self._whois_lookup(registered_domain)
         if creation_date is None:

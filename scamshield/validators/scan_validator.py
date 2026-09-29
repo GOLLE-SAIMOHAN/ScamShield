@@ -1,6 +1,9 @@
 """Validators for scanning requests."""
 
 from io import BytesIO
+import re
+from urllib.parse import urlparse
+
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
@@ -13,6 +16,8 @@ except ImportError:  # pragma: no cover
 
 MAX_IMAGE_PIXELS = 100_000_000
 MAX_IMAGE_DIMENSION = 10000
+MAX_URL_LENGTH = 2048
+ALLOWED_URL_SCHEMES = {"http", "https"}
 
 DISALLOWED_SIGNATURES = [
     b"MZ",
@@ -64,10 +69,37 @@ def _is_valid_media_signature(header: bytes) -> bool:
 
 
 def validate_url_payload(payload: dict) -> dict:
-    """Validate URL analysis input."""
-    url = (payload.get("url") or "").strip()
-    if not url:
+    """Validate URL analysis input against strict scheme, length, and format standards."""
+    raw_url = payload.get("url")
+    if not isinstance(raw_url, str) or not raw_url.strip():
         raise ValidationError("URL is required")
+
+    url = raw_url.strip()
+
+    if len(url) > MAX_URL_LENGTH:
+        raise ValidationError(f"URL exceeds maximum allowed length of {MAX_URL_LENGTH} characters")
+
+    if re.search(r"[\x00-\x1f\x7f]", url):
+        raise ValidationError("URL contains invalid control characters")
+
+    if re.search(r"^https?://[^/@]+@", url, re.IGNORECASE):
+        raise ValidationError("URLs containing user credentials are not allowed")
+
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
+
+    if not scheme:
+        url = f"http://{url}"
+        parsed = urlparse(url)
+        scheme = parsed.scheme.lower()
+
+    if scheme not in ALLOWED_URL_SCHEMES:
+        raise ValidationError(f"Unsupported URL scheme '{scheme}'. Only HTTP and HTTPS are supported")
+
+    hostname = parsed.hostname
+    if not hostname or not hostname.strip():
+        raise ValidationError("URL must contain a valid hostname")
+
     return {"url": url}
 
 
