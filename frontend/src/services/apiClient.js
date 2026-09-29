@@ -1,10 +1,5 @@
 export const TOKEN_STORAGE_KEY = "scamshield_access_token";
-export const REFRESH_TOKEN_STORAGE_KEY = "scamshield_refresh_token";
 
-// NOTE: tokens are kept in localStorage for simplicity, which is readable by
-// any script running on the page (XSS risk). A hardened deployment should
-// move to an httpOnly, Secure, SameSite=strict cookie issued by the backend
-// instead, with CSRF protection on state-changing requests.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 export function getStoredToken() {
@@ -17,19 +12,8 @@ export function setStoredToken(token) {
   }
 }
 
-export function getStoredRefreshToken() {
-  return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
-}
-
-export function setStoredRefreshToken(token) {
-  if (token) {
-    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
-  }
-}
-
 export function clearStoredToken() {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
 }
 
 async function requestOnce(path, method, body, headers, isFormData, auth) {
@@ -55,13 +39,9 @@ async function requestOnce(path, method, body, headers, isFormData, auth) {
 }
 
 async function tryRefreshAccessToken() {
-  const refreshToken = getStoredRefreshToken();
-  if (!refreshToken) return false;
-
   const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh_token: refreshToken }),
   });
   if (!res.ok) return false;
 

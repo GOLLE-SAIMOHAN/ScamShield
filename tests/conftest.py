@@ -36,6 +36,8 @@ def client(app):
 @pytest.fixture()
 def registered_user(client):
     """Register a user and return their credentials plus issued tokens."""
+    import re
+
     payload = {
         "username": "testuser",
         "email": "testuser@example.com",
@@ -43,11 +45,14 @@ def registered_user(client):
     }
     response = client.post("/api/auth/register", json=payload)
     body = response.get_json()
+    cookie_header = response.headers.get("Set-Cookie", "")
+    match = re.search(r"refresh_token=([^;]+)", cookie_header)
+    ref_token = match.group(1) if match else ""
     return {
         "email": payload["email"],
         "password": payload["password"],
         "access_token": body["data"]["access_token"],
-        "refresh_token": body["data"]["refresh_token"],
+        "refresh_token": ref_token,
         "user_id": body["data"]["user"]["user_id"],
     }
 

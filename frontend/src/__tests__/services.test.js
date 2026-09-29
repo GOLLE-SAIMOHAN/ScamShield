@@ -2,8 +2,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   getStoredToken,
   setStoredToken,
-  getStoredRefreshToken,
-  setStoredRefreshToken,
   clearStoredToken,
   apiRequest,
 } from "../services/apiClient.js";
@@ -27,22 +25,18 @@ describe("Frontend Authentication State Handling", () => {
     localStorage.clear();
   });
 
-  it("stores and retrieves access and refresh tokens correctly", () => {
+  it("stores and retrieves access token correctly", () => {
     setStoredToken("test-access-token-123");
-    setStoredRefreshToken("test-refresh-token-456");
 
     expect(getStoredToken()).toBe("test-access-token-123");
-    expect(getStoredRefreshToken()).toBe("test-refresh-token-456");
   });
 
-  it("clears stored tokens on logout", () => {
+  it("clears stored token on logout", () => {
     setStoredToken("test-access-token-123");
-    setStoredRefreshToken("test-refresh-token-456");
 
     clearStoredToken();
 
     expect(getStoredToken()).toBeNull();
-    expect(getStoredRefreshToken()).toBeNull();
   });
 });
 

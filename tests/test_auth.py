@@ -1,7 +1,7 @@
 import re
 
 
-def test_register_returns_access_and_refresh_tokens(client):
+def test_register_returns_access_token_and_cookie(client):
     response = client.post(
         "/api/auth/register",
         json={
@@ -14,7 +14,8 @@ def test_register_returns_access_and_refresh_tokens(client):
     body = response.get_json()
     assert body["success"] is True
     assert body["data"]["access_token"]
-    assert body["data"]["refresh_token"]
+    assert "refresh_token" not in body["data"]
+    assert "refresh_token=" in response.headers.get("Set-Cookie", "")
     assert body["data"]["user"]["email"] == "alice@example.com"
     assert "password_hash" not in body["data"]["user"]
 
@@ -51,7 +52,8 @@ def test_login_with_correct_credentials_succeeds(client, registered_user):
     assert response.status_code == 200
     body = response.get_json()
     assert body["data"]["access_token"]
-    assert body["data"]["refresh_token"]
+    assert "refresh_token" not in body["data"]
+    assert "refresh_token=" in response.headers.get("Set-Cookie", "")
 
 
 def test_login_with_wrong_password_fails(client, registered_user):

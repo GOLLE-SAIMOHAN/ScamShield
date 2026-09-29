@@ -52,8 +52,8 @@ def register_user():
     payload = validate_registration_payload(request.get_json(silent=True) or {})
     try:
         result = AuthService.register(payload)
+        refresh_val = result.pop("_refresh_token", "")
         response = jsonify(result)
-        refresh_val = result.get("data", {}).get("refresh_token", "")
         return _set_refresh_cookie(response, refresh_val), 201
     except DuplicateRecordError as error:
         response, status_code = AuthService.duplicate_response(error)
@@ -65,8 +65,8 @@ def login_user():
     payload = validate_login_payload(request.get_json(silent=True) or {})
     try:
         result = AuthService.login_with_password(payload)
+        refresh_val = result.pop("_refresh_token", "")
         response = jsonify(result)
-        refresh_val = result.get("data", {}).get("refresh_token", "")
         return _set_refresh_cookie(response, refresh_val)
     except TooManyLoginAttemptsError:
         return (

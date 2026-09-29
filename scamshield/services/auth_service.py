@@ -97,8 +97,8 @@ class AuthService:
             "data": {
                 "user": cls._public_user(user),
                 "access_token": token,
-                "refresh_token": refresh_token,
             },
+            "_refresh_token": refresh_token,
         }
 
     @classmethod
@@ -137,8 +137,8 @@ class AuthService:
             "data": {
                 "user": cls._public_user(user),
                 "access_token": token,
-                "refresh_token": refresh_token,
             },
+            "_refresh_token": refresh_token,
         }
 
     @classmethod
