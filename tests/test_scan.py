@@ -162,8 +162,14 @@ def test_analyze_news_without_fact_check_match_keeps_keyword_score(client):
 
 
 def test_analyze_media_accepts_file_upload(client):
+    from PIL import Image
+    buf = BytesIO()
+    img = Image.new("RGB", (10, 10), color="blue")
+    img.save(buf, format="PNG")
+    buf.seek(0)
+
     data = {
-        "file": (BytesIO(b"fakeimagecontent"), "test.png"),
+        "file": (buf, "test.png"),
     }
     response = client.post(
         "/api/analyze-media",

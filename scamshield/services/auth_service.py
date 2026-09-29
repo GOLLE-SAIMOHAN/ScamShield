@@ -261,8 +261,8 @@ class AuthService:
         return verify_password(password, password_hash)
 
     @classmethod
-    def logout_token(cls, token: str) -> dict:
-        """Revoke the presented access token so it can no longer be used."""
+    def logout_token(cls, token: str, refresh_token: str | None = None) -> dict:
+        """Revoke the presented access token and optional refresh token so they can no longer be used."""
         try:
             payload = cls.verify_token(token)
             expires_at = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
@@ -271,6 +271,16 @@ class AuthService:
         except TokenError:
             # Token was already invalid/expired; nothing to revoke.
             pass
+
+        if refresh_token:
+            try:
+                ref_payload = decode_refresh_token(refresh_token)
+                ref_expires_at = datetime.fromtimestamp(ref_payload["exp"], tz=timezone.utc)
+                RevokedTokenRepository.revoke(ref_payload["jti"], ref_expires_at)
+                current_app.logger.info("refresh_token_revoked user_id=%s", ref_payload["sub"])
+            except TokenError:
+                pass
+
         return {"success": True, "message": "Logged out successfully", "data": {}}
 
     @staticmethod

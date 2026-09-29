@@ -2,6 +2,7 @@
 
 from flask import g, jsonify, request
 
+from scamshield.repositories.history_repository import HistoryRepository
 from scamshield.services.scan_service import ScanService
 from scamshield.validators.scan_validator import (
     validate_content_payload,
@@ -36,7 +37,37 @@ def scan_history():
 
 
 def delete_scan(scan_id: str):
-    """Delete a scan history entry."""
+    """Delete a scan history entry with authorization check."""
+    user = getattr(g, "current_user", {}) or {}
+    user_id = user.get("user_id")
+    role = user.get("role", "user")
+
+    scan = HistoryRepository.find_by_scan_id(scan_id)
+    if not scan:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Not Found",
+                    "message": "Scan history entry was not found",
+                }
+            ),
+            404,
+        )
+
+    scan_owner = scan.get("user_id")
+    if role != "admin" and scan_owner and scan_owner != user_id:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Forbidden",
+                    "message": "Permission denied: Cannot delete another user's scan",
+                }
+            ),
+            403,
+        )
+
     if not ScanService.delete_scan(scan_id):
         return (
             jsonify(

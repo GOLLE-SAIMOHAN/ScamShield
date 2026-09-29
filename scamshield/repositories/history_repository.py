@@ -171,6 +171,19 @@ class HistoryRepository:
             handle_repository_error(error)
 
     @staticmethod
+    def find_by_scan_id(scan_id: str) -> dict | None:
+        """Find a scan history document by scan_id."""
+        try:
+            cursor = get_collection(HistoryRepository.collection_name).find(
+                {"scan_id": scan_id}, {"_id": 0}
+            )
+            items = list(cursor)
+            return public_document(items[0]) if items else None
+        except Exception as error:
+            current_app.logger.exception("scan_find_failed scan_id=%s", scan_id)
+            handle_repository_error(error)
+
+    @staticmethod
     def delete_scan(scan_id: str) -> bool:
         """Delete a scan history entry by scan id."""
         try:

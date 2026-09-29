@@ -1,6 +1,6 @@
 """HTTP controllers for authentication."""
 
-from flask import g, jsonify, request
+from flask import current_app, g, jsonify, request
 
 from scamshield.repositories.exceptions import DuplicateRecordError
 from scamshield.services.auth_service import (
@@ -14,6 +14,20 @@ from scamshield.validators.auth_validator import (
     validate_password_reset_request_payload,
     validate_registration_payload,
 )
+
+
+def _set_refresh_cookie(response, refresh_token_value: str):
+    """Attach HttpOnly refresh token cookie to response."""
+    if refresh_token_value:
+        response.set_cookie(
+            "refresh_token",
+            refresh_token_value,
+            httponly=True,
+            secure=not current_app.config.get("DEBUG", False),
+            samesite="Lax",
+            path="/api/auth",
+        )
+    return response
 
 
 def auth_status():
@@ -37,7 +51,10 @@ def register_user():
     """Register a new JWT-authenticated user."""
     payload = validate_registration_payload(request.get_json(silent=True) or {})
     try:
-        return jsonify(AuthService.register(payload)), 201
+        result = AuthService.register(payload)
+        response = jsonify(result)
+        refresh_val = result.get("data", {}).get("refresh_token", "")
+        return _set_refresh_cookie(response, refresh_val), 201
     except DuplicateRecordError as error:
         response, status_code = AuthService.duplicate_response(error)
         return jsonify(response), status_code
@@ -47,7 +64,10 @@ def login_user():
     """Authenticate a JWT user with email and password."""
     payload = validate_login_payload(request.get_json(silent=True) or {})
     try:
-        return jsonify(AuthService.login_with_password(payload))
+        result = AuthService.login_with_password(payload)
+        response = jsonify(result)
+        refresh_val = result.get("data", {}).get("refresh_token", "")
+        return _set_refresh_cookie(response, refresh_val)
     except TooManyLoginAttemptsError:
         return (
             jsonify(
@@ -74,16 +94,24 @@ def current_user():
 
 
 def logout_user():
-    """Revoke the presented JWT access token."""
+    """Revoke the presented JWT access token and refresh token."""
     auth_header = request.headers.get("Authorization", "")
     token = auth_header.removeprefix("Bearer ").strip()
-    return jsonify(AuthService.logout_token(token))
+    cookie_refresh = request.cookies.get("refresh_token")
+    result = AuthService.logout_token(token, refresh_token=cookie_refresh)
+    response = jsonify(result)
+    response.delete_cookie("refresh_token", path="/api/auth")
+    return response
 
 
 def refresh_token():
     """Exchange a refresh token for a new access token."""
     payload = request.get_json(silent=True) or {}
-    token = (payload.get("refresh_token") or "").strip()
+    token = (
+        payload.get("refresh_token")
+        or request.cookies.get("refresh_token")
+        or ""
+    ).strip()
     if not token:
         return (
             jsonify(
@@ -92,7 +120,9 @@ def refresh_token():
             400,
         )
     try:
-        return jsonify(AuthService.refresh(token))
+        result = AuthService.refresh(token)
+        response = jsonify(result)
+        return response
     except AuthenticationError as error:
         return jsonify({"success": False, "error": str(error), "details": {}}), 401
 

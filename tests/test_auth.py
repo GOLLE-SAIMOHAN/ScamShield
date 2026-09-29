@@ -175,3 +175,79 @@ def test_password_reset_confirm_rejects_short_password(client, registered_user):
         json={"token": "irrelevant", "new_password": "short"},
     )
     assert response.status_code == 400
+
+
+def test_login_sets_httponly_refresh_cookie(client, registered_user):
+    response = client.post(
+        "/api/auth/login",
+        json={
+            "email": registered_user["email"],
+            "password": registered_user["password"],
+        },
+    )
+    assert response.status_code == 200
+    cookie = response.headers.get("Set-Cookie", "")
+    assert "refresh_token=" in cookie
+    assert "HttpOnly" in cookie
+
+
+def test_refresh_token_from_cookie(client, registered_user):
+    login_resp = client.post(
+        "/api/auth/login",
+        json={
+            "email": registered_user["email"],
+            "password": registered_user["password"],
+        },
+    )
+    assert login_resp.status_code == 200
+    assert "refresh_token=" in login_resp.headers.get("Set-Cookie", "")
+
+    refresh_resp = client.post("/api/auth/refresh")
+    assert refresh_resp.status_code == 200
+    assert refresh_resp.get_json()["data"]["access_token"]
+
+
+def test_legacy_session_does_not_bypass_jwt(client):
+    with client.session_transaction() as sess:
+        sess["authenticated"] = True
+        sess["user"] = {"email": "attacker@example.com", "role": "user"}
+
+    response = client.get("/api/auth/me")
+    assert response.status_code == 401
+
+
+def test_scan_deletion_authorization_enforced(client, registered_user, auth_headers):
+    # User A creates a scan via API
+    create_resp = client.post(
+        "/api/scan/url",
+        json={"url": "http://suspicious-domain.com"},
+        headers=auth_headers,
+    )
+    assert create_resp.status_code == 200
+    scan_id = create_resp.get_json()["scan_id"]
+
+    # Register user B
+    user_b_resp = client.post(
+        "/api/auth/register",
+        json={
+            "username": "userb",
+            "email": "userb@example.com",
+            "password": "StrongPass123",
+        },
+    )
+    user_b_token = user_b_resp.get_json()["data"]["access_token"]
+    user_b_headers = {"Authorization": f"Bearer {user_b_token}"}
+
+    # User B attempting to delete User A's scan must fail with 403 Forbidden
+    del_resp = client.delete(f"/api/scans/{scan_id}", headers=user_b_headers)
+    assert del_resp.status_code == 403
+
+    # User A deleting their own scan must succeed with 200 OK
+    owner_del_resp = client.delete(f"/api/scans/{scan_id}", headers=auth_headers)
+    assert owner_del_resp.status_code == 200
+
+
+def test_admin_role_enforcement(client, auth_headers):
+    # Regular user calling admin-check receives 403
+    response = client.get("/api/auth/admin-check", headers=auth_headers)
+    assert response.status_code == 403

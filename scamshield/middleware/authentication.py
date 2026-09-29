@@ -13,22 +13,10 @@ from scamshield.services.auth_service import (
 
 
 def login_required(view_func):
-    """Require a valid Bearer JWT or existing legacy session."""
+    """Require a valid Bearer JWT."""
 
     @wraps(view_func)
     def wrapper(*args, **kwargs):
-        # Public endpoints: threat intelligence should remain public.
-        try:
-            path = request.path or ""
-            if path.startswith("/api/threats"):
-                return view_func(*args, **kwargs)
-        except Exception:
-            # If request context is unavailable, fall through to normal checks.
-            pass
-        if session.get("authenticated"):
-            g.current_user = session.get("user")
-            return view_func(*args, **kwargs)
-
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             log_unauthorized_access()
