@@ -96,13 +96,7 @@ class ScanService:
             "confidence": result["confidence"],
             "threat_intelligence": threat_summary,
             "threat_summary": explanation,
-            # Backward compatibility fields for legacy clients and tests:
-            "risk_level": result["classification"],
-            "result": result["classification"],
-            "trust_score": max(0, 100 - result["risk_score"]),
-            "danger_indicators": result["reasons"],
-            "explanation": explanation.get("summary", ""),
-            "recommended_action": first_recommendation,
+            "domain": result.get("domain"),
         }
 
     @staticmethod
