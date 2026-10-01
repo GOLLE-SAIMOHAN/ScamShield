@@ -38,17 +38,20 @@ class ScanService:
 
     @staticmethod
     def check_url(url: str) -> dict:
-        """Analyze a URL using the modular scan engine."""
-        return ScanService._process_url_scan(url)
+        """Analyze a URL and persist scan history."""
+        result = analyze_url(url)
+        HistoryRepository.add_history(
+            "URL",
+            url,
+            result["risk_level"],
+            result["risk_score"],
+            result,
+        )
+        return result
 
     @staticmethod
     def scan_url(url: str, user_id: str | None = None) -> dict:
         """Analyze a URL with the modular scan engine and persist the result."""
-        return ScanService._process_url_scan(url, user_id=user_id)
-
-    @staticmethod
-    def _process_url_scan(url: str, user_id: str | None = None) -> dict:
-        """Shared URL analysis workflow using ScanEngine, ThreatIntelligenceService, and ExplanationService."""
         started_at = perf_counter()
         domain = ThreatIntelligenceService.extract_domain(url)
         existing_threat = ThreatIntelligenceService.get_domain(domain)
@@ -81,28 +84,11 @@ class ScanService:
             result["risk_score"],
             duration_ms,
         )
-        recommendations = explanation.get("recommendations") or []
-        first_recommendation = (
-            recommendations[0]
-            if recommendations
-            else "No major scam signals found, but stay cautious with unknown senders."
-        )
         return {
             "scan_id": scan_id,
-            "url": result["url"],
-            "risk_score": result["risk_score"],
-            "classification": result["classification"],
-            "reasons": result["reasons"],
-            "confidence": result["confidence"],
+            **result,
             "threat_intelligence": threat_summary,
             "threat_summary": explanation,
-            # Backward compatibility fields for legacy clients and tests:
-            "risk_level": result["classification"],
-            "result": result["classification"],
-            "trust_score": max(0, 100 - result["risk_score"]),
-            "danger_indicators": result["reasons"],
-            "explanation": explanation.get("summary", ""),
-            "recommended_action": first_recommendation,
         }
 
     @staticmethod

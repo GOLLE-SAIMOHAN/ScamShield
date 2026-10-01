@@ -24,9 +24,9 @@ def test_check_url_flags_brand_impersonation_phishing(client):
     )
     assert response.status_code == 200
     body = response.get_json()
-    assert body["risk_level"] in {"High", "Critical", "Malicious"}
+    assert body["risk_level"] in {"High", "Critical"}
     assert body["risk_score"] >= 65
-    assert any("paypal" in d.lower() or "brand" in d.lower() for d in body["danger_indicators"])
+    assert "Possible brand impersonation" in body["danger_indicators"]
 
 
 def test_analyze_message_returns_a_verdict(client):
@@ -271,35 +271,3 @@ def test_punycode_and_homograph_detection(client):
     # 6. Nested brand impersonation (paypal.com.evil.example)
     res_nested = analyzer.analyze("http://paypal.com.evil.example")
     assert any("outside its official domain" in f.reason.lower() for f in res_nested.findings)
-
-
-def test_check_url_uses_modular_pipeline(client):
-    response = client.post(
-        "/api/check-url", json={"url": "http://secure-paypal-login.verify-account.tk/reset"}
-    )
-    assert response.status_code == 200
-    body = response.get_json()
-    assert body["scan_id"].startswith("scan-")
-    assert "classification" in body
-    assert "reasons" in body
-    assert "confidence" in body
-    assert "threat_intelligence" in body
-    assert "threat_summary" in body
-
-
-def test_check_url_and_scan_url_produce_equivalent_analysis(client, auth_headers):
-    url = "http://secure-paypal-login.verify-account.tk/reset"
-    res_unauth = client.post("/api/check-url", json={"url": url})
-    res_auth = client.post("/api/scan/url", json={"url": url}, headers=auth_headers)
-
-    assert res_unauth.status_code == 200
-    assert res_auth.status_code == 200
-
-    unauth_body = res_unauth.get_json()
-    auth_body = res_auth.get_json()
-
-    assert unauth_body["risk_score"] == auth_body["risk_score"]
-    assert unauth_body["classification"] == auth_body["classification"]
-    assert unauth_body["reasons"] == auth_body["reasons"]
-    assert unauth_body["confidence"] == auth_body["confidence"]
-

@@ -322,13 +322,12 @@ function normalizeUrlResult(response, input) {
     classification: response.classification || response.risk_level || response.result || "Unknown",
     confidence: response.confidence,
     summary:
-      response.threat_summary?.summary ||
       response.explanation ||
       response.summary ||
       response.recommended_action ||
       "The URL scan completed, but no detailed AI summary was returned.",
     reasons: response.reasons || response.danger_indicators || response.indicators?.map(indicatorText) || [],
-    recommendations: response.threat_summary?.recommendations || [response.recommended_action].filter(Boolean),
+    recommendations: [response.recommended_action].filter(Boolean),
     threat_intelligence: response.threat_intelligence,
     domain: response.domain,
   };
