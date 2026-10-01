@@ -89,6 +89,16 @@ class ScanService:
             **result,
             "threat_intelligence": threat_summary,
             "threat_summary": explanation,
+<<<<<<< HEAD
+=======
+            # Backward compatibility fields for legacy clients and tests:
+            "risk_level": result["classification"],
+            "result": result["classification"],
+            "trust_score": max(0, 100 - result["risk_score"]),
+            "danger_indicators": result["reasons"],
+            "explanation": explanation.get("summary", ""),
+            "recommended_action": first_recommendation,
+>>>>>>> parent of 29ba084 (feat: add reputation analyzer and scan orchestration service)
         }
 
     @staticmethod
