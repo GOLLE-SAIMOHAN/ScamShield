@@ -86,6 +86,7 @@ class ScanService:
         )
         return {
             "scan_id": scan_id,
+<<<<<<< HEAD
             **result,
             "threat_intelligence": threat_summary,
             "threat_summary": explanation,
@@ -99,6 +100,18 @@ class ScanService:
             "explanation": explanation.get("summary", ""),
             "recommended_action": first_recommendation,
 >>>>>>> parent of 29ba084 (feat: add reputation analyzer and scan orchestration service)
+=======
+            "url": result["url"],
+            "risk_score": result["risk_score"],
+            "risk_level": result["classification"],
+            "classification": result["classification"],
+            "reasons": result["reasons"],
+            "danger_indicators": result["reasons"],
+            "confidence": result["confidence"],
+            "threat_intelligence": threat_summary,
+            "threat_summary": explanation,
+            "domain": result.get("domain"),
+>>>>>>> c22718cd78679fd127d0774ad60db5ea4f427557
         }
 
     @staticmethod
