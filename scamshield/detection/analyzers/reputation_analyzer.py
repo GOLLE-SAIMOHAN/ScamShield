@@ -33,7 +33,11 @@ class ReputationAnalyzer:
         try:
             from scamshield.services.threat_intelligence_service import ThreatIntelligenceService
             record = ThreatIntelligenceService.get_domain(host)
-            if record and record.get("highest_risk", 0) >= 65:
+            if (
+                record
+                and int(record.get("scan_count", 0)) > 1
+                and record.get("highest_risk", 0) >= 65
+            ):
                 findings.append(
                     AnalyzerFinding(
                         self.name,
