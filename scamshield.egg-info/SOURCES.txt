@@ -22,6 +22,7 @@ scamshield/controllers/health_controller.py
 scamshield/controllers/scan_controller.py
 scamshield/controllers/threat_controller.py
 scamshield/detection/__init__.py
+scamshield/detection/brand_signals.py
 scamshield/detection/engine.py
 scamshield/detection/models.py
 scamshield/detection/scoring.py
@@ -36,6 +37,7 @@ scamshield/middleware/api_rate_limiting.py
 scamshield/middleware/authentication.py
 scamshield/middleware/rate_limiting.py
 scamshield/middleware/request_logging.py
+scamshield/middleware/security_headers.py
 scamshield/models/__init__.py
 scamshield/models/history.py
 scamshield/models/report.py
@@ -65,6 +67,8 @@ scamshield/security/passwords.py
 scamshield/security/session.py
 scamshield/services/auth_service.py
 scamshield/services/dashboard_service.py
+scamshield/services/fact_check_service.py
+scamshield/services/image_forensics_service.py
 scamshield/services/report_service.py
 scamshield/services/scan_service.py
 scamshield/services/threat_intelligence_service.py
@@ -79,6 +83,12 @@ scamshield/validators/exceptions.py
 scamshield/validators/report_validator.py
 scamshield/validators/scan_validator.py
 tests/test_auth.py
+tests/test_detection_engine.py
+tests/test_fact_check_service.py
 tests/test_health.py
+tests/test_image_forensics_service.py
 tests/test_rate_limiting_and_config.py
 tests/test_scan.py
+tests/test_security_headers.py
+tests/test_threats.py
+tests/test_upload_limits.py
