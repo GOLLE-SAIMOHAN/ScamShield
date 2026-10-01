@@ -86,21 +86,6 @@ class ScanService:
         )
         return {
             "scan_id": scan_id,
-<<<<<<< HEAD
-            **result,
-            "threat_intelligence": threat_summary,
-            "threat_summary": explanation,
-<<<<<<< HEAD
-=======
-            # Backward compatibility fields for legacy clients and tests:
-            "risk_level": result["classification"],
-            "result": result["classification"],
-            "trust_score": max(0, 100 - result["risk_score"]),
-            "danger_indicators": result["reasons"],
-            "explanation": explanation.get("summary", ""),
-            "recommended_action": first_recommendation,
->>>>>>> parent of 29ba084 (feat: add reputation analyzer and scan orchestration service)
-=======
             "url": result["url"],
             "risk_score": result["risk_score"],
             "risk_level": result["classification"],
@@ -111,7 +96,6 @@ class ScanService:
             "threat_intelligence": threat_summary,
             "threat_summary": explanation,
             "domain": result.get("domain"),
->>>>>>> c22718cd78679fd127d0774ad60db5ea4f427557
         }
 
     @staticmethod
