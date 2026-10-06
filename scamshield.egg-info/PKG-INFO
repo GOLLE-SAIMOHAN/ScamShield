@@ -7,355 +7,388 @@ Project-URL: Homepage, https://github.com/your-org/ScamShield
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 
-# ScamShield AI
+# ScamShield
 
-An all-in-one scam awareness and threat-intelligence dashboard for analyzing suspicious messages, URLs, images, and videos.
+<p align="center">
+  <img alt="ScamShield" src="frontend/src/assets/logo.svg" height="64" style="margin-bottom:12px"/>
+  <br/>
+  <strong>ScamShield — Explainable AI for Multi‑Modal Scam Detection</strong>
+</p>
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-Web_App-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+<p align="center">
+  <em>Inspect phishing URLs, scam emails, SMS, fake news, and multimedia with an explainable scanner and threat intelligence workflow.</em>
+</p>
 
-**Live demo:** [phishing-url-xjgv.onrender.com](https://phishing-url-xjgv.onrender.com/)
+---
+
+## Badges
+
+| Component | Status |
+|---|---|
+| Python | ![Python](https://img.shields.io/badge/-Python-3776AB?logo=python&logoColor=white) |
+| Frontend | ![React](https://img.shields.io/badge/-React-61DAFB?logo=react&logoColor=white) |
+| Database | ![MongoDB](https://img.shields.io/badge/-MongoDB-47A248?logo=mongodb&logoColor=white) |
+| Deployment | ![Render](https://img.shields.io/badge/-Render-007CF0?logo=render&logoColor=white) |
+| License | MIT |
+
+---
 
 ## Overview
 
-ScamShield AI helps users inspect potentially fraudulent content from one dashboard. It identifies common social-engineering patterns, examines suspicious URL structures, performs lightweight media-forensics checks, stores scan history, and lets users submit community scam reports.
+ScamShield is a full‑stack reference implementation for analyst-friendly scam detection. It pairs a modular Flask backend with a React + Vite single page app to provide deterministic, explainable checks across multiple content types:
 
-The project is designed as an educational security tool with a Flask API, a responsive browser interface, MongoDB Atlas persistence, and an optional Random Forest phishing-model training pipeline.
+- URLs (structural and heuristic analysis)
+- Text (email, SMS, news) with urgency, credential and reward signals
+- Images and videos with local pixel-level and frame-sampling heuristics
+- Threat intelligence records and a paginated history repository
 
-## Features
+The codebase emphasizes observability, extendability, and clear separation of concerns (controllers → services → repositories → detection engine).
 
-- **Message analysis** - checks SMS, email, WhatsApp text, screenshot text, and call transcripts for urgency, impersonation, threats, rewards, and requests for sensitive information.
-- **URL trust scanner** - flags risky URL patterns such as missing HTTPS, raw IP addresses, URL shorteners, excessive subdomains, brand impersonation, and suspicious paths.
-- **Media forensics** - reviews image metadata and simple pixel-level signals, while recording file size, dimensions, and video duration.
-- **Community reporting** - accepts scam reports and assigns an initial risk level.
-- **Threat dashboard** - displays scan metrics, trends, scam categories, recent reports, and analysis history.
-- **MongoDB persistence** - stores reports, scan history, users, threat intelligence, notifications, feedback, and audit logs through repository classes.
-- **REST API** - exposes endpoints for integration with other applications.
-- **Optional ML training** - includes a Random Forest training script using the bundled phishing-websites dataset.
+---
 
-## How Detection Works
+## Why ScamShield?
 
-The running application uses explainable, rule-based risk scoring:
+- Provides interpretable detection indicators (names, details, matches) rather than an opaque score.
+- Integrates threat telemetry to track repeated malicious domains and summarize historical risk.
+- Designed for rapid local development (in-memory DB fallback) and production deployment (MongoDB + Render).
 
-1. Submitted text is matched against common scam-language patterns.
-2. URLs are inspected for structural warning signs.
-3. Images are checked for metadata, entropy, edge, noise, and color-pattern signals.
-4. Each result includes a risk score, detected indicators, and a recommended action.
+---
 
-`train_model.py` is a separate experimental pipeline that trains and saves a Random Forest phishing classifier and scaler. The current web endpoints do not load those generated model files.
+## Live Demo
 
-> [!IMPORTANT]
-> ScamShield provides risk indicators, not a guarantee that content is safe or fraudulent. Always verify sensitive requests through an official website, app, phone number, or trusted authority.
+Explore the deployed demo:
 
-## Tech Stack
+https://phishing-url-xjgv.onrender.com
 
-- **Backend:** Python, Flask, Flask-CORS
-- **Frontend:** React, React Router, Bootstrap, Vite
-- **Database:** MongoDB Atlas with PyMongo
-- **Media analysis:** Pillow
-- **Machine learning:** pandas, NumPy, SciPy, scikit-learn, joblib
-- **Deployment:** Gunicorn and Render-compatible `Procfile`
+---
 
-## Getting Started
+## Key Features
 
-### Prerequisites
+| Feature | Implemented |
+|---|---:|
+| URL structural analysis (HTTPS, IP host, long URL, shorteners) | ✅ |
+| Text analysis (email, SMS, news) with urgency/authority/reward signals | ✅ |
+| Image AI-generation/deepfake checks via optional Sightengine ML models | ✅ |
+| Image and sampled-video forensic heuristics (entropy, noise, EXIF, frame motion) | ✅ |
+| Media upload endpoint with metadata support (width/height/duration) | ✅ |
+| Threat intelligence domain records & top threats listing | ✅ |
+| Scan history (MongoDB-backed, paginated) with in-memory fallback | ✅ |
+| JWT-based auth flows + demo legacy session | ✅ |
 
-- Python 3.10 or newer
-- Git
-- MongoDB Atlas cluster and connection string for persistent storage
+> The table lists only functionality implemented in the repository.
 
-### Installation
+---
+
+## Technology Stack
+
+- Frontend: React 18, Vite, modern ES modules
+- Backend: Python (3.10+), Flask (app factory, blueprints)
+- Persistence: MongoDB (pymongo) with in-memory fallback for local runs
+- Detection: Deterministic analyzers implemented in Python (`scamshield.detection`, `scamshield.ai.detector`)
+- Dev/Deployment: Render config and `Procfile` included
+
+---
+
+## Architecture (high level)
+
+```mermaid
+flowchart LR
+  SPA[React + Vite SPA] -->|REST /assets| API[Flask API]
+  API --> Controllers
+  Controllers --> Services
+  Services --> ScanEngine[Scan Engine]
+  ScanEngine --> Analyzers[Url/Domain/SSL/Keyword/Reputation]
+  Services --> Repositories
+  Repositories --> DB[(MongoDB / InMemory)]
+  Services --> ExplanationService
+```
+
+---
+
+## AI Detection Pipeline
+
+1. Input normalization (URL scheme, text trimming)
+2. Rule-based analyzer chain (URL analyzer → domain/ssl/keyword/reputation analyzers)
+3. Findings aggregation and scoring (risk score → label)
+4. Explanation composition via `ExplanationService`
+5. Persistence: `ThreatIntelligenceService` and `HistoryRepository`
+
+Notes:
+- Production URL and content detection uses explainable heuristic analyzers; it does not load a trained machine-learning model.
+- News content uses a two-tier signal when `GOOGLE_FACT_CHECK_API_KEY` is configured: the Google Fact Check Tools API first looks for independently reviewed claims and can confirm or override the keyword result. When no reviewed claim is found, ScamShield falls back to keyword/style heuristics that detect sensationalist writing, not verified truth.
+- `GOOGLE_FACT_CHECK_API_KEY` is optional. Leave it unset for a fast keyword-only fallback; API failures and unavailable results degrade gracefully without blocking analysis.
+- The offline Random Forest trainer is retained at `experiments/train_model.py` with its dependencies in `requirements-experiments.txt`. It is not part of the live application pipeline.
+- Image analysis uses two signals: when `SIGHTENGINE_API_USER` and `SIGHTENGINE_API_SECRET` are configured, Sightengine's `genai` and `deepfake` models provide an independent ML signal that can confirm or override weaker forensic evidence. The existing forensic checks in `scamshield/ai/detector.py` always run as a second signal, covering EXIF metadata, pixel entropy, noise, edge detection, and filename patterns.
+- Sightengine credentials are optional and available for free at https://sightengine.com. Missing credentials or an API failure gracefully degrades to forensic-heuristics-only analysis.
+- Video analysis uses free local processing only: it samples up to six evenly spaced frames, reuses the image EXIF/noise/entropy heuristics, and checks temporal consistency between frames. This is frame-sampling heuristic analysis, not a trained deepfake detection model. A dedicated model integration (for example, Sightengine or Reality Defender) remains a future improvement if budget allows.
+
+---
+
+## Folder Structure (abridged)
+
+```
+. 
+├─ README.md
+├─ app.py
+├─ scamshield/
+│  ├─ __init__.py
+│  ├─ app.py
+│  ├─ config.py
+│  ├─ controllers/
+│  ├─ routes/
+│  ├─ services/
+│  ├─ repositories/
+│  ├─ ai/
+│  ├─ detection/
+│  ├─ analysis/
+│  ├─ middleware/
+│  └─ utils/
+├─ frontend/
+│  ├─ src/
+│  ├─ dist/
+│  └─ package.json
+├─ scripts/
+├─ requirements.txt
+├─ render.yaml
+└─ tests/
+```
+
+---
+
+## Installation
+
+Prerequisites:
+
+- Python 3.10+
+- Node.js 18+ and npm
+- (Optional) Pillow for image forensic analysis
+
+Backend (recommended):
 
 ```bash
-git clone https://github.com/GOLLE-SAIMOHAN/ScamShield.git
-cd ScamShield
 python -m venv .venv
-```
-
-Activate the virtual environment:
-
-```bash
-# Windows
-.venv\Scripts\activate
-
-# macOS or Linux
-source .venv/bin/activate
-```
-
-Install the dependencies:
-
-```bash
+# Activate virtualenv
+# Windows PowerShell: . .venv\Scripts\Activate.ps1
+# macOS / Linux: source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Local MongoDB Atlas Setup
-
-The project now auto-loads `.env` during Flask startup. A local `.env` file is included with placeholder Atlas values copied from `.env.example`.
-
-Before running locally, replace only `<PASSWORD>` in `.env` with your real MongoDB Atlas database user password:
-
-```text
-MONGODB_URI=mongodb+srv://USERNAME:<PASSWORD>@cluster0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-DATABASE_NAME=scamshield
-SECRET_KEY=CHANGE_ME_TO_A_RANDOM_SECRET
-DEBUG=True
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-MONGODB_STRICT=False
-```
-
-On startup, ScamShield logs whether it is attempting MongoDB Atlas, whether `ping` succeeds, the active database name, and whether MongoDB or the development fallback is active.
-
-### Run the Application
+Frontend:
 
 ```bash
-python app.py
+cd frontend
+npm ci
 ```
 
-Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
+---
 
-The application connects to MongoDB Atlas when `MONGODB_URI` is configured and adds a small set of sample reports when the reports collection is empty. If no MongoDB URI is provided, the app uses an in-memory development fallback so local frontend/API work can still run.
+## Environment Variables
 
-### Frontend
+Configure production secrets and DB connectivity via environment variables. Key values (see `scamshield/config.py`):
 
-[#frontend](#frontend)
+- `SECRET_KEY`, `JWT_SECRET_KEY` — set explicit secrets before production
+- `MONGODB_URI` — optional; without it the app uses the in-memory fallback
+- `DATABASE_NAME`, `FRONTEND_BASE_URL`, `DEMO_EMAIL`, `DEMO_PASSWORD`
 
-The dashboard is a React app (Vite + React Router + Bootstrap) that lives in `frontend/`. Its production build (`frontend/dist`) is **not committed to git** and must be generated locally or by your deployment pipeline.
+Rate limiting & auth:
 
-To build it once and let Flask serve the static bundle:
+- `API_RATE_LIMIT_MAX_REQUESTS`, `API_RATE_LIMIT_WINDOW_SECONDS`
+- `LOGIN_MAX_FAILED_ATTEMPTS`, `JWT_EXPIRATION_MINUTES`
+
+---
+
+## Running Locally
+
+Build production frontend (optional for Flask-served assets):
 
 ```bash
 cd frontend
 npm ci
 npm run build
 cd ..
-python app.py
 ```
 
-Open [http://127.0.0.1:5000](http://127.0.0.1:5000) — Flask serves the built React app directly.
+Start Flask (development):
 
-For active frontend development with hot reload instead, run the Vite dev server against the Flask API:
+```bash
+export FLASK_APP=scamshield
+export FLASK_ENV=development
+flask run
+```
+
+On Windows (PowerShell):
+
+```powershell
+set FLASK_APP=scamshield
+set FLASK_ENV=development
+flask run
+```
+
+For fast frontend iteration:
 
 ```bash
 cd frontend
-npm ci
 npm run dev
+# Visit http://localhost:5173
 ```
 
-This serves the frontend on a separate port (typically `http://localhost:5173`) and proxies API calls to the Flask backend. Set `VITE_API_BASE_URL` in a `frontend/.env` file if the backend isn't running on `http://127.0.0.1:5000`, and add that dev origin to `CORS_ORIGINS` on the backend.
+---
 
-If you run `python app.py` before building the frontend, `/` responds with a `503` and a hint to build it — this is expected, not a bug.
+## API Overview (implemented endpoints)
 
-### Configuration
+All APIs are under `/api` unless otherwise noted.
 
-ScamShield reads runtime configuration from environment variables. Copy `.env.example` to `.env` when you add a dotenv loader or configure these values directly in your shell/deployment platform.
+- GET `/api/health` — health and database backend mode
+- GET `/` — frontend index (serves built `frontend/dist` in production)
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `MONGODB_URI` | empty | MongoDB Atlas connection string |
-| `DATABASE_NAME` | `scamshield` | MongoDB database name |
-| `SECRET_KEY` | `scamshield-demo-secret` | Flask session signing key |
-| `CORS_ORIGINS` | `*` | Allowed CORS origins, comma-separated for multiple origins |
-| `DEBUG` | `false` | Enables Flask debug mode when set to `true` |
-| `MONGODB_TIMEOUT_MS` | `5000` | MongoDB server selection timeout |
-| `MONGODB_STRICT` | `false` | When `true`, startup fails instead of using the development fallback |
-| `JWT_SECRET_KEY` | `SECRET_KEY` value | HS256 JWT signing key |
-| `JWT_EXPIRATION_MINUTES` | `60` | Access token lifetime |
-| `BCRYPT_ROUNDS` | `12` | bcrypt password hashing cost |
-| `JWT_REFRESH_EXPIRATION_DAYS` | `30` | Refresh token lifetime |
-| `API_RATE_LIMIT_MAX_REQUESTS` | `30` | Max requests per client IP per window across `/api/*` (except `/api/health`) |
-| `API_RATE_LIMIT_WINDOW_SECONDS` | `60` | Rolling window size for the general API rate limiter |
-| `PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES` | `30` | Password reset token lifetime |
-| `SCAMSHIELD_DEMO_EMAIL` | `demo@scamshield.com` | Demo login email |
-| `SCAMSHIELD_DEMO_PASSWORD` | `scamshield123` | Demo login password |
+Authentication (blueprint `auth_bp`):
 
-Legacy `SCAMSHIELD_SECRET_KEY`, `SCAMSHIELD_CORS_ORIGINS`, and `FLASK_DEBUG` values are still supported for backward compatibility.
+- GET `/api/auth-status` — legacy demo session auth status
+- POST `/api/login` — demo legacy login
+- POST `/api/logout` — demo logout
+- POST `/api/auth/register` — JWT user registration
+- POST `/api/auth/login` — JWT login
+- POST `/api/auth/refresh` — token refresh
+- GET `/api/auth/me` — protected current user (middleware)
 
-**Production safety check:** on startup, if `DEBUG` is not enabled and `SECRET_KEY` or `JWT_SECRET_KEY` are left at their insecure built-in defaults, the app refuses to start rather than silently running with guessable secrets. Always set both explicitly outside local development.
+Scanning (blueprint `scan_bp`):
 
-### MongoDB Collections
+- POST `/check-url` and `/api/check-url` — lightweight URL check
+- POST `/api/analyze` — analyze text content (`content`, `content_type`)
+- POST `/api/analyze-file` — multipart file + optional transcript
+- POST `/api/analyze-media` — image/video multipart upload (file, width, height, duration)
+- POST `/api/scan/url` — protected full URL scan + record threat intelligence
+- GET `/api/scans/history` — paginated history
+- DELETE `/api/scans/<scan_id>` — protected delete
 
-ScamShield prepares these collections through the repository layer:
+Threat Intelligence (blueprint `threat_bp`):
 
-- `users`
-- `scans`
-- `reports`
-- `threat_intelligence`
-- `notifications`
-- `feedback`
-- `audit_logs`
+- GET `/api/threats/domain/<domain>` — lookup domain intel
+- GET `/api/threats/top` — list top risky domain records
 
-### MongoDB Indexes
+Dashboard:
 
-The app creates indexes for:
+- GET `/api/dashboard` — aggregated metrics and telemetry for the frontend
 
-- `users.email`
-- `users.username`
-- `scans.scan_id`
-- `scans.url`
-- `scans.created_at`
-- `reports.report_id`
-- `reports.created_at`
-- `threat_intelligence.url`
-- `threat_intelligence.created_at`
-- `notifications.created_at`
-- `feedback.created_at`
-- `audit_logs.created_at`
+---
 
-### Migrate Legacy SQLite Data
+## Screenshots
 
-If a previous `scamshield.db` file exists, configure `MONGODB_URI` and run:
+<center>
 
-```bash
-python scripts/migrate_sqlite_to_mongodb.py
-```
+![Home](screenshots/home.png)
 
-You can also pass a custom SQLite path:
+</center>
 
-```bash
-python scripts/migrate_sqlite_to_mongodb.py path/to/scamshield.db
-```
+<center>
 
-## Optional: Train the Phishing Model
+![Scanner](screenshots/scanner.png)
 
-Create the model output directory and run the training script:
+</center>
 
-```bash
-mkdir models
-python train_model.py
-```
+<center>
 
-The script reads `data/Training Dataset.arff` and generates:
+![URL Analysis](screenshots/url-analysis.png)
 
-- `models/phishing_rf_model_30feat.pkl`
-- `models/scaler_30feat.pkl`
+</center>
 
-Generated `.pkl` files are ignored by Git.
+<center>
 
-## API Endpoints
+![SMS Analysis](screenshots/sms-analysis.png)
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/` | Serve the ScamShield dashboard |
-| `GET` | `/api/health` | Return application health status |
-| `GET` | `/api/auth-status` | Return current session authentication state |
-| `POST` | `/api/login` | Sign in with demo analyst credentials |
-| `POST` | `/api/logout` | Clear the active session |
-| `POST` | `/api/auth/register` | Register a user and return a JWT access + refresh token pair |
-| `POST` | `/api/auth/login` | Login with email/password and return a JWT access + refresh token pair |
-| `POST` | `/api/auth/refresh` | Exchange a valid refresh token for a new access token |
-| `POST` | `/api/auth/password-reset/request` | Request a password reset link for an email (always returns a generic success message) |
-| `POST` | `/api/auth/password-reset/confirm` | Confirm a password reset with a token and new password |
-| `GET` | `/api/auth/me` | Return the current JWT-authenticated user |
-| `POST` | `/api/auth/logout` | Revoke the presented access token server-side |
-| `POST` | `/api/analyze` | Analyze message or transcript content |
-| `POST` | `/api/check-url` | Inspect a URL for phishing indicators |
-| `POST` | `/check-url` | Backward-compatible URL inspection endpoint |
-| `POST` | `/api/analyze-file` | Analyze an uploaded file with optional transcript text |
-| `POST` | `/api/analyze-media` | Run lightweight image or video forensics |
-| `POST` | `/api/report` | Submit a community scam report |
-| `GET` | `/api/dashboard` | Return dashboard metrics, reports, and scan history |
+</center>
 
-Example request:
+<center>
 
-```bash
-curl -X POST http://127.0.0.1:5000/api/analyze \
-  -H "Content-Type: application/json" \
-  -d "{\"content_type\":\"message\",\"content\":\"Verify your KYC now and share your OTP.\"}"
-```
+![Threat Intelligence](screenshots/threat-intelligence.png)
 
-## Authentication
+</center>
 
-ScamShield supports the first half of production authentication with bcrypt password hashing and HS256 JWT access tokens.
+<center>
 
-Registration:
+![History](screenshots/history.png)
 
-```bash
-curl -X POST http://127.0.0.1:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"analyst\",\"email\":\"analyst@example.com\",\"password\":\"StrongPass123\"}"
-```
+</center>
 
-Login:
+---
 
-```bash
-curl -X POST http://127.0.0.1:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"analyst@example.com\",\"password\":\"StrongPass123\"}"
-```
+## Project Workflow
 
-Use the returned token for protected endpoints:
+- Frontend calls client services in `frontend/src/services/*` to interact with the Flask API.
+- Controllers validate incoming requests, services orchestrate detection and storage, and repositories interact with MongoDB (or in-memory fallback).
+- The `ScanService` coordinates analyzers, explanations, and persistent records.
 
-```bash
-curl http://127.0.0.1:5000/api/auth/me \
-  -H "Authorization: Bearer ACCESS_TOKEN"
-```
+---
 
-JWT payloads include `user_id`, `email`, `role`, issued-at time, and expiration. Password hashes are never returned by the API. The legacy demo session endpoints remain available for the existing frontend flow.
+## Security Features
 
-## Backend Architecture
+- Config validation prevents starting in production with default secrets.
+- JWT authentication and refresh flows protect sensitive endpoints.
+- Login rate limiting and failed attempt handling.
+- Configurable CORS and DB backend mode awareness.
 
-The backend now uses an application factory and layered package architecture while preserving the original frontend and API surface.
+---
 
-- `routes/` defines Flask Blueprints and URL registration only.
-- `controllers/` receives HTTP requests, delegates work, and returns JSON or rendered templates.
-- `services/` contains URL analysis orchestration, file analysis, media analysis, dashboard composition, authentication, and report generation.
-- `repositories/` isolates MongoDB access behind repository classes and protocols so controllers and services never access the database directly.
-- `validators/` validates and normalizes incoming request payloads and uploads.
-- `middleware/` contains request logging plus placeholders for authentication and rate limiting.
-- `ai/` contains the existing detection engine moved from the root-level `detector.py`.
-- `utils/` contains shared helpers for logging, time, and centralized error responses.
-- `extensions.py` owns Flask extension instances such as CORS.
-- `config.py` centralizes environment-driven configuration.
+## Future Roadmap (repository-grounded)
 
-Root-level `app.py` and `detector.py` remain as compatibility shims. Existing commands such as `python app.py`, `gunicorn app:app`, and imports from `detector` continue to work.
+- Frame-level deepfake video model pipeline (recommended, not implemented).
+- OCR / speech-to-text integration for richer media analysis (not implemented).
+- CI/CD hardening and automated dependency/CVE scanning.
+- Admin UI for threat intelligence management and RBAC improvements.
 
-## Project Structure
-
-```text
-ScamShield/
-|-- app.py                  # Compatibility entry point for python app.py and gunicorn app:app
-|-- detector.py             # Backward-compatible detector imports
-|-- train_model.py          # Optional Random Forest training pipeline
-|-- requirements.txt        # Python dependencies
-|-- Procfile                # Gunicorn deployment command
-|-- scamshield/
-|   |-- __init__.py         # Application factory
-|   |-- app.py              # WSGI module for scamshield.app:app deployments
-|   |-- config.py           # Environment-driven configuration
-|   |-- extensions.py       # Flask extension instances
-|   |-- ai/                 # Detection engine
-|   |-- controllers/        # HTTP controllers
-|   |-- middleware/         # Request logging and future auth/rate limit hooks
-|   |-- models/             # Domain model dataclasses
-|   |-- repositories/       # MongoDB repositories, schemas, indexes, and migration-safe helpers
-|   |-- routes/             # Flask Blueprints
-|   |-- security/           # Security helpers
-|   |-- services/           # Business logic and orchestration
-|   |-- utils/              # Shared utilities
-|   `-- validators/         # Request validation
-|-- frontend/
-|   |-- index.html          # Dashboard interface
-|   |-- index.css           # Application styling
-|   `-- script.js           # Client-side behavior and API calls
-|-- data/                   # Phishing dataset files
-`-- docs/                   # Dataset feature documentation
-```
-
-## Deployment
-
-The included `Procfile` starts the application with:
-
-```text
-web: gunicorn app:app
-```
-
-For production, set `MONGODB_URI`, `DATABASE_NAME`, `SECRET_KEY`, `CORS_ORIGINS`, and `DEBUG=false` in your deployment environment.
+---
 
 ## Contributing
 
-Contributions, bug reports, and feature suggestions are welcome. Fork the repository, create a focused branch, and open a pull request describing your changes.
+1. Fork the repository
+2. Create a branch: `git checkout -b feature/your-change`
+3. Run tests: `pytest -q`
+4. Build frontend if applicable: `cd frontend && npm ci && npm run build`
+5. Open a PR with clear rationale
 
-## Author
+Please follow the repository's layering conventions (controllers → services → repositories).
 
-Created by [Sai Mohan Golle](https://github.com/gollesaimohan-source).
+---
+
+## License
+
+ScamShield is available under the MIT License. See `LICENSE`.
+
+---
+
+## Developer
+
+Sai Mohan — https://github.com/GOLLE-SAIMOHAN/ScamShield
+
+---
+
+## Quick Examples
+
+Analyze a URL (curl):
+
+```bash
+curl -X POST "http://localhost:5000/api/check-url" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"http://suspicious.example/login"}'
+```
+
+Analyze text (email):
+
+```bash
+curl -X POST "http://localhost:5000/api/analyze" \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Dear customer, your account is suspended. Verify now.","content_type":"email"}'
+```
+
+Upload media (image):
+
+```bash
+curl -X POST "http://localhost:5000/api/analyze-media" \
+  -F "file=@/path/to/image.jpg" \
+  -F "width=1200" \
+  -F "height=800"
+```
+
+---
+
+All documentation above reflects implemented code paths and configuration in this repository.
