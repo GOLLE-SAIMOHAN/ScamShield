@@ -343,7 +343,7 @@ Please follow the repository's layering conventions (controllers â†’ services â†
 
 ## License
 
-ScamShield is available under the MIT License. See `LICENSE`.
+ScamShield is available under the [MIT License](./LICENSE).
 
 ---
 
